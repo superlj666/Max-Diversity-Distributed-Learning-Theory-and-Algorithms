@@ -1,0 +1,728 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2018
+
+% ready for submission
+\usepackage{nips_2018}
+
+% to compile a preprint version, e.g., for submission to arXiv, add
+% add the [preprint] option:
+% \usepackage[preprint]{nips_2018}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2018}
+
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2018}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{bm}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb,amsfonts}
+\newcommand{\argmax}{\operatornamewithlimits{arg\,max}}
+\newcommand{\argmin}{\operatornamewithlimits{arg\,min}}
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\title{Distributed Learning: Risk Bound and Algorithm}
+
+% The \author macro works with any number of authors. There are two
+% commands used to separate the names and addresses of multiple
+% authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to
+% break the lines. Using \AND forces a line break at that point. So,
+% if LaTeX puts 3 of 4 authors names on the first line, and the last
+% on the second line, try using \AND instead of \And before the third
+% author name.
+
+\author{
+  %David S.~Hippocampus\thanks{Use footnote for providing further
+%    information about author (webpage, alternative
+%    address)---\emph{not} for acknowledging funding agencies.} \\
+%  Department of Computer Science\\
+%  Cranberry-Lemon University\\
+%  Pittsburgh, PA 15213 \\
+%  \texttt{hippo@cs.cranberry-lemon.edu} \\
+  %% examples of more authors
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \AND
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+}
+
+\begin{document}
+% \nipsfinalcopy is no longer used
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\section{Preliminaries}
+We consider  the supervised learning where a learning algorithm receives a sample of $N$ labeled points
+\begin{align*}
+  \mathcal{S}=\left\{z_i=(\mathbf  x_i,y_i)\right\}_{i=1}^N
+        \in (\mathcal{Z}=\mathcal{X}\times \mathcal{Y})^N,
+\end{align*}
+where $\mathcal{X}$ denotes the input space and
+$\mathcal{Y}$ denotes the output space.
+%$\mathcal{Y}\subset \mathbb{R}$ in the regression case and
+%$\mathcal{Y}=\{-1,+1\}$ in classification case.
+We assume $\mathcal{S}$ is drawn identically and independently from a fixed,
+but unknown probability  distribution $\mathbb{P}$ on
+$\mathcal{Z}=\mathcal{X}\times\mathcal{Y}$.
+The goal is to learn a good prediction model $f\in\mathcal{H}:\mathcal{X}\rightarrow\mathcal{Y}$,
+whose prediction accuracy at instance
+$z=(\mathbf x,y)$ is measured by a loss function $\ell(f,z)$.
+
+In this paper, we focus on the supervised learning over the some Hilbert space $\mathcal{H}$:
+\begin{align}
+  \hat{f}=\argmin_{f\in\mathcal{H}} \hat{R}(f)=\frac{1}{N}\sum_{i=1}^N\ell(f,z_i)+r(f)
+\end{align}
+where $\ell(f,z)$ is the loss function, and $r(f)$ is a regularizer.
+
+The expect of $\hat{R}$ is defined as
+\begin{align}
+  R(f)=\mathbb{E}_{z\sim \mathbb{P}}[\ell(f,z)]+ r(f).
+\end{align}
+Let $f^\ast=\argmin_{f\in\mathcal{H}} R(f)$,  and $R_\ast=R(f^\ast)$.
+
+In the distributed setting, we divide evenly amongst $m$ processors or inference procedures.
+Let $\mathcal{S}_i, i\in(1,2,\ldots,m)$, denote a subsampled dataset of size $n=\frac{N}{m}$.
+For each $i=1,2,\ldots,m$, the local estimate
+\begin{align*}
+  \hat{f}_i=\argmin_{f\in\mathcal{H}}\hat{R}_i(f)=
+  \left\{
+    \frac{1}{n}\sum_{z_i\in\mathcal{S}_i}\ell(f,z_j)+r(f).
+  \right\}
+\end{align*}
+The average local estimates is denote as
+\begin{align*}
+  \bar{f}=\frac{1}{m}\sum_{i=1}^m\hat{f}_i.
+\end{align*}
+
+In the next, we will estimate the discrepancy of $R(\bar{f})$ and $R(f^\ast)$.
+\section{Faster Rates of Distributed Learning}
+\subsection{Assumptions}
+In the following, we use $\|\cdot\|_\mathcal{H}$ to denote the norm induced by inner product of the Hilbert space $\mathcal{H}$.
+\begin{assumption}
+\label{assumption-strongly-convex}
+  The function $\nu(f,z)=\ell(f,z)+r(f)$ is $\eta$-strongly convex and $\beta$-smooth with respect to the first variable $f$,
+  that is $\forall f,f'\in\mathcal{H}$, $z\in\mathcal{Z}$,
+  \begin{align}
+    \label{assumption-strongly}
+     \langle \nabla \nu(f,z), f-f'\rangle_\mathcal{H}+\frac{\eta}{2}\|f-f'\|_\mathcal{H} &\leq \nu(f,z)-\nu(f',z),\\
+     \label{assumption-smooth}
+     \left\|\nabla\nu(f,z)-\nabla \nu(f',z)\right\|_\mathcal{H}&\leq \beta\|f-f'\|_\mathcal{H}.
+  \end{align}
+\end{assumption}
+The above assumptions allow us to model many popular losses,
+such as square loss and logistic loss, and the regularizer, $r(f)=\lambda \|f\|_\mathcal{H}^2$.
+\begin{assumption}
+\label{assumption-optimal-bound}
+  Let $f_\ast=\argmin_{f\in\mathcal{H}}R(f)$. We assume that the gradient at $f_\ast$ is upper bounded by $M$, that is
+  \begin{align*}
+    \|\nabla \ell(f^\ast,z)\|_\mathcal{H}\leq M, \forall z\in\mathcal{Z}.
+  \end{align*}
+\end{assumption}
+The above assumption is a common assumption can be seen in \cite{zhang2012communication,Zhang2017er}.
+\section{Faster Rates of Distributed Learning}
+\begin{theorem}
+\label{theorem-main}
+For any $0<\delta<1$, $\epsilon$, the cover number of the Hilbert space $\mathcal{H}$ is defined as $\mathcal{N}(\mathcal{H},\epsilon)$.
+Under \textbf{Assumptions} \ref{assumption-strongly-convex} and \ref{assumption-optimal-bound},
+and if
+  \begin{align}
+    \label{equation-12}
+    m\leq \frac{N\eta}{4\beta\log\mathcal{N}(\mathcal{H},\epsilon)},
+  \end{align}
+  with probability at least $1-\delta$,
+  we have
+  \begin{align}
+    \label{equation-13}
+    \begin{aligned}
+    R(\bar{f})-R(f_\ast)&\leq
+    \frac{16\beta \log(4m/\delta)}{n^2\eta}+\frac{128\beta R_\ast\log(4m/\delta)}{n\eta}+\frac{32\beta^2\epsilon^2}{\eta}+
+    \frac{64\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}\\
+   &~~~~~~\frac{64\beta \log^2\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon^2}{n^2\eta}
+   -\Delta(\bar{f}),
+  \end{aligned}
+  \end{align}
+  where $R_\ast=R(f^\ast)$, $\Delta_{\bar{f}}=\frac{\eta}{4m^2}\sum_{i,j=1,i\not=j}^m\|\hat{f}_i-\hat{f}_j\|_\mathcal{H}^2$
+\end{theorem}
+By choosing $\epsilon$ small enough,
+\begin{align*}
+\frac{32\beta^2\epsilon^2}{\eta}+
+    \frac{64\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}
+    +\frac{64\beta \log^2\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon^2}{n^2\eta}
+\end{align*}
+will becomes non-dominating.
+To be specific, we have the following corollary:
+\begin{corollary}
+\label{corollary-first}
+  By setting $\epsilon=\frac{1}{n}$ in Theorem \ref{theorem-main},
+  with high probability,
+  we have
+  \begin{align*}
+    R(\bar{f})-R(f_\ast)=\mathcal{O}\left(\frac{R_\ast\log(m)}{n}
+    +\frac{\log(\mathcal{N}(\mathcal{H},\frac{1}{n}))}{n^2}
+    -\Delta(\bar{f})\right).
+  \end{align*}
+\end{corollary}
+
+\subsection{Linear Hypothesis Space}
+\label{subsection-3.1}
+If we consider the linear hypothesis space, that is
+\begin{align*}
+\mathcal{H}=\left\{f=\mathbf w^\mathrm T\mathbf x|\mathbf w\in \mathbb{R}^d, \|\mathbf w\|_2\leq B\right\}.
+\end{align*}
+According to the \cite{pisier1999volume},
+the cover number of linear hypothesis space can be bounded:
+\begin{align*}
+  \log\left(\mathcal{N}(\mathcal{H},1/n)\right)\leq d\log \left(6Bn\right).
+\end{align*}
+Thus, from Corollary \ref{corollary-first}, we have
+\begin{align*}
+  R(\bar{f})-R(f_\ast)&=\mathcal{O}\left(\frac{R_\ast\log m}{n}+\frac{d\log n}{n^2}-
+  \Delta(\bar{f})\right)
+  %&\leq \mathcal{O}\left(\frac{1}{n^2}+\frac{R_\ast\log m}{n}+\frac{d\log n}{n^2}\right)
+\end{align*}
+When the minimal risk is small, i.e., $R_\ast=\mathcal{O}\left(\frac{d}{n}\right)$,
+the rate is improved to
+\begin{align*}
+    \mathcal{O}\left(\frac{d\log (mn)}{n^2}-\Delta(\bar{f})\right)=\mathcal{O}\left(\frac{d\log N}{n^2}-\Delta(\bar{f})\right).
+\end{align*}
+Therefore, if $m\leq \sqrt{\frac{N}{d\log N}}$, we have
+\begin{align*}
+    R(\bar{f})-R(f_\ast)=\mathcal{O}\left(\frac{1}{N}-\Delta(\bar{f})\right).
+\end{align*}
+\subsection{Reproducing Kernel Hilbert Space}
+\label{subsection-3.2}
+The reproducing kernel Hilbert space $\mathcal{H}_K$ associated with the kernel $K$ is
+defined to be the closure of the linear span of the set of functions
+$\left\{K(\mathbf x,\cdot):\mathbf x\in\mathcal{X}\right\}$ with the inner product satisfying
+\begin{align*}
+  \langle K(\mathbf x,\cdot), f\rangle_{\mathcal{H}_K}=f(\mathbf x), \forall \mathbf x\in\mathcal{X}, f\in\mathcal{H}_K.
+\end{align*}
+
+In this subsection, we consider hypothesis space as the reproducing kernel Hilbert space,
+\begin{align*}
+  \mathcal{H}:=\left\{f\in\mathcal{H}_{K}: \|f\|_{\mathcal{H}_K}\leq B\right\}.
+\end{align*}
+
+From \cite{zhou2002covering}, if the Mercer kernel
+\begin{align*}
+  K(\mathbf x,\mathbf x')=k(\mathbf x-\mathbf x'), k(\mathbf x)=\exp\left\{-\frac{\|\mathbf x\|^2}{\sigma^2}, \mathbf x,\mathbf x' \in[0,1]^d, \right\},
+\end{align*}
+then for $0\leq \epsilon\leq B/2$, there holds:
+\begin{align*}
+ \log \left(\mathcal{N}(\mathcal{H},1/n)\right)=\mathcal{O}\left(\log^d(nB)\right)
+\end{align*}
+According to Corollary \ref{corollary-first}, we can obtain that
+\begin{align*}
+  R(\bar{f})-R(f_\ast)=\mathcal{O}\left(\frac{R_\ast\log m}{n}+\frac{\log^d n}{n^2}-
+  \Delta(\bar{f})\right).
+  %&\leq \mathcal{O}\left(\frac{1}{n^2}+\frac{R_\ast\log m}{n}+\frac{d\log n}{n^2}\right)
+\end{align*}
+When  the minimal risk  $R_\ast$ is small, $R_\ast=\mathcal{O}\left(\frac{\log^{(d-1)}n}{n}\right)$,
+if $m\leq n$, we have
+\begin{align*}
+  R(\bar{f})-R(f_\ast)=\mathcal{O}\left(\frac{\log^d n}{n^2}-
+  \Delta(\bar{f})\right)
+\end{align*}
+Therefore, if $m\leq \sqrt{\frac{N}{\log^2 n}}$,
+we have
+\begin{align*}
+     R(f)-R(f_\ast)=\mathcal{O}\left(\frac{1}{N}-\Delta(\bar{f})\right)
+\end{align*}
+%Note that for our bound,
+%\begin{align*}
+%     R(f)-R(f_\ast)=\left\{
+%     \begin{aligned}
+%     &\mathcal{O}\left(\frac{d\log N}{n^2}-\Delta(\bar{f})\right)  &&\text{linear hypothesis space}\\
+%     &\mathcal{O}\left(\frac{\log^d n}{n^2}-\Delta(\bar{f})\right) &&\text{RKHS  space}
+%     \end{aligned}
+%     \right.
+%\end{align*}
+%So, we can obtain that
+%\begin{align*}
+%     R(f)-R(f_\ast)=\mathcal{O}\left(\frac{1}{N}-\Delta(\bar{f})\right)
+%     % \left\{
+%%     \begin{aligned}
+%%     &\mathcal{O}\left(\frac{1}{N}-\Delta(\bar{f})\right)  &\text{if} m\leq \sqrt{\frac{N}{d\log N}} &\text{for linear hypothesis space}\\
+%%     &\mathcal{O}\left(\frac{\log^d n}{n^2}-\Delta(\bar{f})\right) &ff &\text{RKHS  space}
+%%     \end{aligned}
+%%     \right.
+%\end{align*}
+%if $m\leq \sqrt{\frac{N}{d\log N}}$ for linear hypothesis space, or $m\leq \sqrt{\frac{N}{\log^2 n}}$ for RKHS space.
+
+\subsection{Comparison with Related Work}
+Under the smooth, strongly convex and other some common assumption,
+\cite{zhang2012communication} shows that
+\begin{align}
+  \mathbb{E}\left[\|\bar{f}-f_\ast\|^2\right]=\mathcal{O}\left(\frac{1}{N}+\frac{\log d}{n^2}\right).
+\end{align}
+If $\nu(f,z)$ is $L$-Lipschitz continuous over $f$, that is
+\begin{align*}
+  \forall f, f\in \mathcal{H}, z\in\mathcal{Z}, |\nu(f,z)-\nu(f',z)|\leq L\|f-f'\|_\mathcal{H},
+\end{align*}
+it is easy to verity that
+\begin{align}
+  \nonumber R(f)-R(f_\ast)&\leq L\mathbb{E}\left[\|\bar{f}-f_\ast\|_\mathcal{H}\right]\leq L\sqrt{\mathbb{E}\left[\|\bar{f}-f_\ast\|^2_\mathcal{H}\right]}\\
+  \label{related-work-one}    &= \mathcal{O}\left(\frac{1}{\sqrt{N}}+\frac{\sqrt{\log d}}{n}\right).
+\end{align}
+According to the subsections \label{subsection-3.1} and \label{subsection-3.2},
+we know that if $m$ is not very large,
+the order of this paper can reach $\mathcal{O}\left(\frac{1}{N}-\Delta(\bar{f})\right)$,
+which is much sharper than the order of \eqref{related-work-one}.
+
+\cite{Zhang2013} consider the kernel ridge regression, under some assumptions over the feature map induced by the kernel function,
+and if $m$ is not very large,
+they show that
+\begin{align*}
+   \mathbb{E}\left[\|\bar{f}-f_\ast\|^2\right]=\mathcal{O}\left(\frac{1}{N}\right).
+\end{align*}
+If $\nu(f,z)$ is $L$-Lipschitz continuous over $f$,
+same as the above analysis,
+it is easy to verity that
+\begin{align*}
+  R(f)-R(f_\ast)=\mathcal{O}\left(\frac{1}{\sqrt{N}}\right),
+\end{align*}
+which is much looser than of propose bound.
+\section{Discrepant Distributed Algorithms (DDA)}
+According to the above results, under some assumptions, we know that
+  \begin{align*}
+     R(f)-R(f_\ast)=\mathcal{O}\left(\frac{1}{N}-\Delta(\bar{f})\right),
+\end{align*}
+where $\Delta_{\bar{f}}=\frac{\eta}{4m^2}\sum_{i,j=1,i\not=j}^m\|\hat{f}_i-\hat{f}_j\|_\mathcal{H}^2$.
+Thus, to obtain tight bound, the discrepancy of each local estimate $\hat{f}_i, i=1,\ldots,m$ should be large.
+Therefore, it is reasonable to derive the following optimization problem:
+\begin{align}
+  \label{opt-problem}
+  \hat{f}_i=\argmin_{f\in\mathcal{H}}\frac{1}{n}\sum_{z_j\in\mathcal{S}_i}\ell(f,z_i)+r(f)-\gamma \|f-\bar{f}_{\backslash i}\|_\mathcal{H},
+\end{align}
+where $\bar{f}_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not =i}^m\hat{f}_j$.
+\subsection{Linear Hypothesis Space}
+When $\mathcal{H}$ is a linear Hypothesis space,
+we consider the following problem:
+\begin{align*}
+  \hat{\mathbf w}_i=\argmin_{\mathbf w\in\mathbb{R}^d}
+  \frac{1}{n}\sum_{z_i\in\mathcal{S}_i}(\mathbf w^\mathrm{T}\mathbf x_i-y_i)^2+\lambda \|\mathbf w\|_2^2-\gamma \|\mathbf w-\bar{\mathbf w}_{\backslash i}\|_2^2,
+\end{align*}
+where $\bar{\mathbf w}_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not =i}\hat{\mathbf w}_j$.
+If given $\bar{\mathbf w}_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not =i}\hat{\mathbf w}_j$,
+it is easy to verity that $\hat{\mathbf w}_i$ can be written as
+\begin{align*}
+  \hat{\mathbf w}_i=\left(\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf X_{\mathcal{S}_i}^\mathrm{T}+\lambda \mathbf I_d-\gamma \mathbf I_d\right)^{-1}
+  \left(\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf y_{\mathcal{S}_i}-\gamma \bar{\mathbf w}_{\backslash i}\right),
+\end{align*}
+where $\mathbf X_{\mathcal{S}_i}=(\mathbf x_{t_1},\mathbf x_{t_2},\ldots, \mathbf x_{t_n})$,
+$\mathbf y_{\mathcal{S}_i}=(y_{t_1},y_{t_2},\ldots,y_{t_n})^\mathrm{T}$, $z_{t_i}\in \mathcal{S}_i$, $i=1,\ldots, n$.
+
+
+Let $\mathbf A_i=\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf X_{\mathcal{S}_i}^\mathrm{T}+\lambda \mathbf I_d-\gamma \mathbf I_d$,
+$\mathbf b_i=\frac{1}{n}\mathbf X_{\mathcal{S}_i}^\mathrm{T}\mathbf y_{\mathcal{S}_i}$.
+
+Let $\mathbf d_i=\mathbf A_i^{-1}\bar{\mathbf w}_{\backslash i}$,
+  $\hat{\mathbf w}_i=\mathbf A_i^{-1} \mathbf b_i$,
+  we have
+  \begin{align*}
+    \bar{\mathbf w}_{\backslash i}^\mathrm{T}\hat{\mathbf w}_i=\bar{\mathbf w}_{\backslash i}^\mathrm{T}\mathbf A_i^{-1} \mathbf b_i
+    =\left(\mathbf A_i^{-1}\bar{\mathbf w}_{\backslash i}\right)^\mathrm{T}\mathbf b_i=\mathbf d_i^\mathrm{T}\mathbf b_i,
+  \end{align*}
+  thus $\mathbf d_i=\frac{\bar{\mathbf w}_{\backslash i}^\mathrm{T}\hat{\mathbf w}_i}{\mathbf b_i}$
+
+The DDA Algorithm is given as follows:
+\begin{itemize}
+  \item[\textbf{Input}]: $\lambda,\gamma$, $\mathbf X$, $m$, $\zeta>0$.
+  %\item[1] For branch node $i$: \\
+%   \qquad Compute $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$, push $\hat{\mathbf w}_i^0$ to center node;\\
+%           Center node: $\bar{\mathbf w}^0_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not=i}\hat{\mathbf w}_i^0$
+  %$i=1,\ldots, m$,
+%        where $\mathbf A_i=\left(\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf X_{\mathcal{S}_i}^\mathrm{T}
+ % +\lambda \mathbf I_n+\gamma \mathbf I_n\right)^{-1}$,
+  %$\mathbf b_i=\frac{1}{n}\mathbf X_{\mathcal{S}_i}^\mathrm{T}\mathbf y_{\mathcal{S}_i}$,
+%  $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$, $i=1,\ldots, m$,
+  %\item[1]: Singular value decomposition:
+%  $\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf X_{\mathcal{S}_i}^\mathrm{T}=\mathbf V_{\mathcal{S}_i}
+%  \mathbf \Sigma_{\mathcal{S}_i}\mathbf V^\mathrm{T}_{\mathcal{S}_i}$,
+%  $i=1,\ldots,m$.\\
+%  $\hat{\mathbf w}_i^0=\mathbf V_{\mathcal{S}_i}\left(\mathbf \Sigma_{\mathcal{S}_i}+(\lambda+\gamma)\mathbf I_n\right)^{-1}
+%  \mathbf V^\mathrm{T}_{\mathcal{S}_i}\left(\frac{1}{n}\mathbf X_{\mathcal{S}_i}^\mathrm{T}\mathbf y_{\mathcal{S}_i}\right)$,$i=1,\ldots,m$\\
+%  $\bar{\mathbf w}_{\backslash i}^0=\frac{1}{m-1}\sum_{j=1,j\not=i}\hat{\mathbf w}_i^0$, $i=1,\ldots, m$
+  \item[\textbf{For}] $t=0, 1, \ldots, T$\\
+  %\textbf{If} $t=0$
+%  \begin{itemize}
+%    \item For branch node $i$: $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$, push $\hat{\mathbf w}_i^0$ to center node;
+%    \item Center node: $\bar{\mathbf w}^0_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not=i}\hat{\mathbf w}_i^0$
+%  \end{itemize}
+  Each branch node $i$:
+   \begin{itemize}
+    \item[\textbf{If}]$t=0$\\
+     $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$;
+    \end{itemize}
+    %\item[]
+    \begin{itemize}
+    \item[\textbf{else}]
+    \item[ ]
+     $\mathbf d_i^t=\frac{\left(\bar{\mathbf w}^0_{\backslash i}\right)^\mathrm{T}\hat{\mathbf w}_i^0}{\mathbf b_i}$\\
+    $\hat{\mathbf w}_i^t=\hat{\mathbf w}_i^0-\gamma\mathbf d_i^t$;\\
+    %$\bar{\mathbf w}^{t}_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not=i}\hat{\mathbf w}_i^t$;\\
+     push $\hat{\mathbf w}_i^t$ to center node;
+    \end{itemize}
+   Center node:
+    \begin{itemize}
+      \item[ ]
+      $\bar{\mathbf w}^t=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf w}_i^t$\\
+      \textbf{If} $\|\bar{\mathbf w}^{t}-\bar{\mathbf w}^{t-1}\|\leq \zeta$, \textbf{End}\\
+              \textbf{else} push $\bar{\mathbf w}^{t}_{\backslash i}=\frac{m\bar{\mathbf w}^{t}-\hat{\mathbf w}_i^t}{m-1}$ to each branch node $i$
+    \end{itemize}
+    \item[\textbf{End}]
+    \item[\textbf{Output}]: $\bar{\mathbf w}=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf w}_i^T$
+\end{itemize}
+\subsection{Reproducing Kernel Hilbert Space}
+When $\mathcal{H}$ is a reproducing kernel Hilbert space,
+we consider the following problem:
+\begin{align}
+\label{opti-RKHS-first}
+  \hat{f}_i=
+  \argmin_{f\in\mathcal{H}}
+  \frac{1}{n}\sum_{z_i\in\mathcal{S}_i}(f(\mathbf x_i)-y_i)^2+\lambda \|f\|_\mathcal{H}^2+\gamma \|f-\bar{f}_{\backslash i}\|_\mathcal{H}^2,
+  %\frac{1}{n}\sum_{z_k\in\mathcal{S}_i}\left(\sum_{j=1}^n c_j K(\mathbf x_j,\mathbf x_k)-y_k\right)^2+
+%  \lambda \left\|\sum_{j=1}^n c_j K(\mathbf x_j,\cdot)\right\|_\mathcal{H}^2+\gamma \mathbf w-\bar{\mathbf w}_{\backslash i}\|_2^2,
+\end{align}
+where $f(\mathbf x)=\sum_{j=1}^n c_j K(\mathbf x_j,\mathbf x)$,
+which can be written as
+\begin{align}
+\label{opti-RKHS}
+  \hat{\mathbf c}_i=\argmin_{\mathbf c\in\mathbb{R}^n}
+  \frac{1}{n}\|\mathbf K_{\mathcal{S}_i}\mathbf c-\mathbf y_{\mathcal{S}_i}\|_2^2+\lambda \mathbf c^\mathrm{T}\mathbf K_{\mathcal{S}_i}\mathbf c
+  -\gamma \left(\mathbf c- \bar{\mathbf c}_{\backslash i}\right)^\mathrm{T}
+  \mathbf K_{\mathcal{S}_i}\left(\mathbf c- \bar{\mathbf c}_{\backslash i}\right).
+\end{align}
+If given $\bar{\mathbf c}_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not =i}\hat{\mathbf c}_j$,
+it is easy to verity that $\hat{\mathbf c}_i$ can be written as
+\begin{align*}
+  \hat{\mathbf c}_i=\left(\mathbf K_{\mathcal{S}_i}+\lambda \mathbf I_n-\gamma\mathbf I_n\right)^{-1}
+  \left(\mathbf y_{\mathcal{S}_i}-\gamma \bar{\mathbf c}_{\backslash i}\right)
+\end{align*}
+Let $\mathbf A_i=\mathbf K_{\mathcal{S}_i}+\lambda \mathbf I_n-\gamma\mathbf I_n$, $\mathbf b_i=\mathbf y_{\mathcal{S}_i}$.
+\begin{itemize}
+  \item[\textbf{Input}]: $\lambda,\gamma$, $\mathbf X$, $m$, $\zeta>0$.
+  \item[\textbf{For}] $t=0, 1, \ldots, T$\\
+  %\textbf{If} $t=0$
+%  \begin{itemize}
+%    \item For branch node $i$: $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$, push $\hat{\mathbf w}_i^0$ to center node;
+%    \item Center node: $\bar{\mathbf w}^0_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not=i}\hat{\mathbf w}_i^0$
+%  \end{itemize}
+  Each branch node $i$:
+   \begin{itemize}
+    \item[\textbf{If}]$t=0$\\
+     $\hat{\mathbf c}_i^0=\mathbf A_i^{-1} \mathbf b_i$;
+    \end{itemize}
+    %\item[]
+    \begin{itemize}
+    \item[\textbf{else}]
+    \item[ ]
+     $\mathbf d_i^t=\frac{\left(\bar{\mathbf c}^0_{\backslash i}\right)^\mathrm{T}\hat{\mathbf c}_i^0}{\mathbf b_i}$\\
+    $\hat{\mathbf c}_i^t=\hat{\mathbf c}_i^0-\gamma\mathbf d_i^t$;\\
+    %$\hat{\mathbf c}_i^t=\hat{\mathbf c}_i^0-\gamma\mathbf A_i^{-1}\bar{\mathbf c}^{t-1}_{\backslash i}$;\\
+    %$\bar{\mathbf w}^{t}_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not=i}\hat{\mathbf w}_i^t$;\\
+     push $\hat{\mathbf w}_i^t$ to center node;
+    \end{itemize}
+   Center node:
+    \begin{itemize}
+      \item[ ]
+      $\bar{\mathbf c}^t=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf c}_i^t$\\
+      \textbf{If} $\|\bar{\mathbf c}^{t}-\bar{\mathbf c}^{t-1}\|\leq \zeta$, \textbf{End}\\
+              \textbf{else} push $\bar{\mathbf c}^{t}_{\backslash i}=\frac{m\bar{\mathbf c}^{t}-\hat{\mathbf c}_i^t}{m-1}$ to each branch node $i$
+    \end{itemize}
+    \item[\textbf{End}]
+    \item[\textbf{Output}]: $\bar{\mathbf c}=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf c}_i^T$
+\end{itemize}
+
+\section{Analysis}
+\subsection{The Key Idea}
+Since $R(f)$ is $\eta$-strongly convex function,
+we have
+\begin{align*}
+  R(\bar{f})\leq \frac{1}{m}\sum_{i=1}^mR(\hat{f}_i)-\frac{\eta}{2m^2}\sum_{i,j=1}^m\|\hat{f}_i-\hat{f}_j\|^2.
+\end{align*}
+Therefore, we have
+\begin{align}
+\label{equaiton-strongly-ff}
+  R(\bar{f})-R(f_\ast)\leq \frac{1}{m}\sum_{i=1}^m\left[R(\hat{f}_i)-R(f_\ast)\right]
+  -\frac{\eta}{4m^2}\sum_{i,j=1,i\not=j}^m\|\hat{f}_i-\hat{f}_j\|^2.
+\end{align}
+In the next, we will estimate $R(\hat{f}_i)-R(f_\ast)$.
+
+Our theoretical analysis is built upon the following inequality:
+\begin{align}
+ \nonumber &~~~~~R(\hat{f}_i)-R(f_\ast)+\frac{\eta}{2}\|\hat{f}_i-f_\ast\|^2
+  \leq \langle \nabla R(\hat{f}_i),\hat{f}_i-f_\ast\rangle
+  \\ \nonumber&=\langle \nabla R(\hat{f}_i)-\nabla R(f_\ast)-[\nabla \hat{R}(\hat{f}_i)-\nabla \hat{R}(f_\ast)],
+   \hat{f}_i-f_\ast\rangle+\langle
+   \nabla \hat{R}(\hat{f}_i)-\nabla \hat{R}(f_\ast)+\nabla R(f_\ast), \hat{f}_i-f_\ast\rangle\\
+   &\nonumber=\langle \nabla R(\hat{f}_i)-\nabla R(f_\ast)-[\nabla \hat{R}(\hat{f}_i)-\nabla \hat{R}(f_\ast)],
+   \hat{f}_i-f_\ast\rangle+\langle \nabla R(f_\ast)-\nabla \hat{R}(f_\ast), \hat{f}_i-f_\ast\rangle\\
+   \label{equation-important-middle}
+   &\leq \left(\underbrace{\left\|\nabla R(\hat{f}_i)-\nabla R(f_\ast)-[\nabla \hat{R}(\hat{f}_i)-\nabla \hat{R}(f_\ast)]\right\|}_{:=A_1}+
+   \underbrace{\left\|\nabla R(f_\ast)-\nabla \hat{R}(f_\ast)\right\|}_{:A_2}\right)\left\|\hat{f}_i-f_\ast \right\|
+\end{align}
+where $\eta$ is the strong convexity modulus of $R(\cdot)$ if exists otherwise it is zero.
+\begin{lemma}
+  \label{lem-nonequation}
+    Let $\mathcal{H}$ be a Hilbert space and let $\xi$ be a random variable with values in $\mathcal{H}$.
+    Assume $\|\xi\|\leq M\leq \infty$ almost surely.
+    Denote $\sigma^2(\xi)=\mathbb{E}[\|\xi\|^2]$.
+    Let $\{\xi_i\}_{i=1}^n$ be $m$ independent drawers of $\xi$.
+    For any $0\leq \delta\leq 1$, with confidence $1-\delta$,
+    \begin{align*}
+      \left\|\frac{1}{n}\sum_{j=1}^n[\xi_j-\mathbb{E}[\xi_j]]\right\|\leq \frac{2M\log(2/\delta)}{n}+\sqrt{\frac{2\sigma^2(\xi)\log(2/\delta)}{n}}.
+    \end{align*}
+  \end{lemma}
+\begin{lemma}
+\label{lemma-nablaR-nablahat}
+  Under \textbf{Assumptions} \ref{assumption-loss-convex}, \ref{assumption-loss-bound} and \ref{assumption-regularizer-lipschitz}, with probability at least $1-\delta$,
+  for any $f\in\mathcal{N}(\mathcal{H},\epsilon)$,
+  we have
+  \begin{align}
+  \label{equation-nabalRR-empRR}
+  \begin{aligned}
+ % \nonumber
+    &~~~~\left\|\nabla R(f)-\nabla R(f_\ast)-[\nabla \hat{R}(f)-\nabla \hat{R}(f_\ast)]\right\| \\
+   &\leq \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\|f-f_\ast\|}{n}+\sqrt{\frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)(R(f)-R(f_\ast))}{n}}.
+  \end{aligned}
+  \end{align}
+\end{lemma}
+\begin{proof}
+  Let $\nu(f)=\ell(f,\cdot)+r(f)$.
+  Note that $\nu(f)$ is $\beta$-smooth,
+  so we have
+  \begin{align}
+    \|\nabla\nu(f)-\nabla\nu(f_\ast)\| \leq \beta\|f-f_\ast\|
+  \end{align}
+  Because $\nu$ is $\beta$-smooth and convex, by (2.1.7) of?,
+  we have
+  \begin{align*}
+   \left\|\nabla\nu (f)-\nabla \nu (f_\ast)\right\|^2
+    \leq
+    \beta\left(\nu (f)-\nu (f_\ast)
+    -\langle \nabla\nu (f_\ast), f-f_\ast\rangle \right).
+  \end{align*}
+  Taking expectation over both sides, we have
+  \begin{align*}
+    &~~~~\mathbb{E}[\left\|\nabla\nu (f)-\nabla\nu (f_\ast)\right\|^2]\\
+    &\leq \beta \left(R(\hat{f}_i)-R(f_\ast)-\langle \nabla R(f_\ast), f-f_\ast\rangle\right)\\
+    &\leq \beta \left(R(\hat{f}_i)-R(f_\ast)\right)
+  \end{align*}
+  where the last inequality follows from the optimality condition of $f_\ast$, i.e.,
+  \begin{align*}
+    \langle \nabla R(f_\ast),f-f_\ast\rangle \geq 0,\forall f\in\mathcal{H}.
+  \end{align*}
+\end{proof}
+Following Lemma \ref{lem-nonequation}, with probability at least $1-\delta$, we have
+\begin{align*}
+  &~~~~\left\|
+  \nabla R(f)-\nabla R(f_\ast)-[\nabla \hat{R}(f)-\nabla \hat{R}(f_\ast)]
+  \right\|\\
+  &=\left\|
+    \nabla R(f)-\nabla R(f_\ast)
+    -\frac{1}{n}\sum_{z_i\in \mathcal{S}_i}
+    \left[\nabla \nu(f)-\nabla \nu(f_\ast)\right]
+  \right\|\\
+  &\leq \frac{2\beta\|f-f_\ast\|\log(2/\delta)}{n}+\sqrt{\frac{2\beta(R(f)-R(f_\ast))\log (2/\delta)}{n}}
+\end{align*}
+
+We obtain Lemma \ref{lemma-nablaR-nablahat} by taking the union bound over all $f\in\mathcal{N}(\mathcal{H},\epsilon)$.
+
+
+\begin{lemma}
+  with probability at least $1-\delta$, we have
+  \begin{align}
+  \label{equation-nablaR-nablaempR}
+    \left\|\nabla R(f_\ast)-\nabla \hat{R}(f_\ast)\right\|\leq \frac{2M\log(2/\delta)}{n}+\sqrt{\frac{8\beta R_\ast\log(2/\delta)}{n}}.
+  \end{align}
+\end{lemma}
+\begin{proof}
+Let $\nu(f,z_i)=\ell(f,z_i)+r(f)$
+  Since $\nu(\cdot,z_i)$ is $\beta$-smooth and nonegative,
+  from Lemma 4 of Srebro et al. (2010), we have
+  \begin{align*}
+    \left\|\nabla \nu(f_\ast,z_i)\right\|^2\leq 4\beta \nu(f_\ast,z_i)
+  \end{align*}
+  and thus
+    \begin{align*}
+      \mathbb{E}_{z\sim\mathbb{P}}\left[\left\|\nabla \nu(f_\ast,z)\right\|^2\right]\leq 4\beta\mathbb{E}_{z\sim\mathbb{P}}[\nu(f_\ast,z)]=
+      4\beta R(f_\ast).
+    \end{align*}
+    From the \textbf{Assumption}, we have $\nabla \|\nu(f_\ast, z)\|\leq M$, $\forall z\in\mathcal{Z}$.
+    Then, according to Lemma \ref{lem-nonequation}, with probability at least $1-\delta$, we have
+    \begin{align*}
+      &\left\|\nabla R(f_\ast)-\nabla \hat{R}(f_\ast)\right\|=\left\|\nabla R(f_\ast)-\frac{1}{n}\sum_{z_j\in\mathcal{S}_i}\nabla \nu(f_\ast,z_j)\right\|\\
+      &\leq \frac{2\beta \log(2/\delta)}{n}+\sqrt{\frac{8\beta R_\ast \log(2/\delta)}{n}}.
+    \end{align*}
+\end{proof}
+
+\begin{theorem}
+  At least $1-2\delta$,
+  if
+  \begin{align}
+    \label{equation-12}
+    n\geq \frac{4\beta\log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)}{\eta},
+  \end{align}
+  we have
+  \begin{align}
+    \label{equation-13}
+    \begin{aligned}
+    R(\bar{f})-R(f_\ast)&\leq
+    \frac{16\beta \log(2m/\delta)}{n^2\eta}+\frac{128\beta R_\ast\log(2m/\delta)}{n\eta}+\frac{32\beta^2\epsilon^2}{\eta}\\
+   &~~~~+
+   \frac{64\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}+
+   \frac{64\beta \log^2\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon^2}{n^2\eta}\\
+  &~~~~-\frac{\eta}{4m^2}\sum_{i,j=1,i\not=j}^m\|\hat{f}_i-\hat{f}_j\|^2.
+  \end{aligned}
+  \end{align}
+\end{theorem}
+\begin{proof}
+From the property of $\epsilon$-net, we know that there exists a point
+$\tilde{f}\in\mathcal{N}(\mathcal{H},\epsilon)$ such that $$\|\hat{f}_i-\tilde{f}\|\leq \epsilon.$$
+According to \textbf{Assumption} \ref{assumption-loss-bound-smooth}, we have
+\begin{align}
+  \nonumber
+    &~~~~~\left\|\nabla R(\hat{f}_i)-\nabla R(f_\ast)-[\nabla \hat{R}(\hat{f}_i)-\nabla \hat{R}(f_\ast)]\right\| \\
+   \nonumber &\leq \left\|\nabla R(\tilde{f})-\nabla R(f_\ast)-[\nabla \hat{R}(\tilde{f})-\nabla \hat{R}(f_\ast)]\right\|+2\beta \epsilon\\
+   \nonumber &\overset{\eqref{equation-nabalRR-empRR}}{\leq}
+   \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\|\tilde{f}-f_\ast\|}{n}+
+   \sqrt{\frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)(R(\tilde{f})-R(f_\ast))}{n}}+2\beta\epsilon\\
+   \nonumber&\leq \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\|\hat{f}_i-f_\ast\|}{n}
+   +\frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n}+2\beta\epsilon\\
+   \nonumber&~~~~~+\sqrt{\frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)(R(\hat{f}_i)-R(f_\ast))}{n}}+
+   \sqrt{\frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\left(\left|R(\hat{f}_i)-R(\tilde{f})\right|\right)}{n}}\\
+   \nonumber &\overset{\eqref{equation-regularizer-lipschitz}}{\leq} \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\|\hat{f}_i-f_\ast\|}{n}+
+   \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n}+2\beta\epsilon\\
+   \label{equation-31}&~~~~+\sqrt{\frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)(R(\hat{f}_i)-R(f_\ast))}{n}}+
+   \sqrt{\frac{\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n}}
+\end{align}
+
+  Substituting \eqref{equation-31} and \eqref{equation-nablaR-nablaempR} into \eqref{equation-important-middle},
+  with probability at least $1-2\delta$, we have
+  \begin{align}
+    \label{equation-first-equation}
+    \begin{aligned}
+      &R(\hat{f}_i)-R(f_\ast)+\frac{\eta}{2}\|\hat{f}_i-f_\ast\|^2\\
+      &\leq \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\|\hat{f}_i-f_\ast\|^2}{n}+
+   \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon \|\hat{f}_i-f_\ast\|}{n}+2\beta\epsilon \|\hat{f}_i-f_\ast\|\\
+   &~~~~+\|\hat{f}_i-f_\ast\|\sqrt{\frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)(R(\hat{f}_i)-R(f_\ast))}{n}}+
+   \|\hat{f}_i-f_\ast\|\sqrt{\frac{\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n}}\\
+   &~~~~+\frac{2\beta \log(2/\delta)\|\hat{f}_i-f_\ast\|}{n}+\|\hat{f}_i-f_\ast\|\sqrt{\frac{8\beta R_\ast \log(2/\delta)}{n}}.
+    \end{aligned}
+  \end{align}
+  Note that
+  \begin{align*}
+    \sqrt{ab}\leq \frac{a}{2\eta}+\frac{b\eta}{2}, \forall a,b,\eta\geq 0.
+  \end{align*}
+  Therefore, we can obtain that
+  \begin{align*}
+  %\label{equation-finally}
+%  \begin{aligned}
+    \|\hat{f}_i-f_\ast\|\sqrt{\frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)(R(\hat{f}_i)-R(f_\ast))}{n}}
+    &\leq \frac{2\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)(R(\hat{f}_i)-R(f_\ast))}{n\eta}+\frac{\eta }{8}\|\hat{f}_i-f_\ast\|^2,\\
+    \frac{2\beta \log(2/\delta)\|\hat{f}_i-f_\ast\|}{n}&\leq \frac{8\beta \log(2/\delta)}{n^2\eta}+\frac{\eta }{16}\|\hat{f}_i-f_\ast\|^2,\\
+    \|\hat{f}_i-f_\ast\|\sqrt{\frac{8\beta R_\ast \log(2/\delta)}{n}}&\leq \frac{64\beta R_\ast\log(2/\delta)}{n\eta}+\frac{\eta }{32}\|\hat{f}_i-f_\ast\|^2,\\
+    2\beta\epsilon \|\hat{f}_i-f_\ast\|&\leq \frac{32\beta^2\epsilon^2}{\eta}+\frac{\eta }{64}\|\hat{f}_i-f_\ast\|^2,\\
+    \|\hat{f}_i-f_\ast\|\sqrt{\frac{\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n}}&
+    \leq \frac{32\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}+\frac{\eta }{128}\|\hat{f}_i-f_\ast\|^2\\
+    \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon \|\hat{f}_i-f_\ast\|}{n}
+    &\leq \frac{32\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)^2\epsilon^2}{n^2\eta}+\frac{\eta }{128}\|\hat{f}_i-f_\ast\|^2.
+  %\end{aligned}
+  \end{align*}
+ Substituting the above  inequation into \eqref{equation-first-equation}, we can obtain that
+ \begin{align*}
+   &~~~~R(\hat{f}_i)-R(f_\ast)+\frac{\eta}{4}\|\hat{f}_i-f_\ast\|^2\\
+   &\leq \frac{\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\|\hat{f}_i-f_\ast\|^2}{n}+
+   \frac{2\beta \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)(R(\hat{f}_i)-R(f_\ast))}{n\eta}+\frac{8\beta \log(2/\delta)}{n^2\eta}\\
+   &~~~+\frac{64\beta R_\ast\log(2/\delta)}{n\eta}+\frac{32\beta^2\epsilon^2}{\eta}+
+   \frac{32\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}+
+   \frac{32\beta \log^2\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon^2}{n^2\eta}\\
+   &\overset{\eqref{equation-12}}{\leq}
+   \frac{\eta}{4}\|\hat{f}_i-f_\ast\|^2+\frac{1}{2}(R(\hat{f}_i)-R(f_\ast))+\frac{8\beta \log(2/\delta)}{n^2\eta}\\
+   &~~~+\frac{64\beta R_\ast\log(2/\delta)}{n\eta}+\frac{32\beta^2\epsilon^2}{\eta}+
+   \frac{32\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}+
+   \frac{32\beta \log^2\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon^2}{n^2\eta}.
+ \end{align*}
+ Thus, with $1-2\delta$, we have
+ \begin{align}
+    \label{equation-14}
+    \begin{aligned}
+    R(\hat{f}_i)-R(f_\ast)&\leq
+    \frac{16\beta \log(2/\delta)}{n^2\eta}+\frac{128\beta R_\ast\log(2/\delta)}{n\eta}+\frac{32\beta^2\epsilon^2}{\eta}\\
+    &~~~~+
+   \frac{64\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}+
+   \frac{64\beta \log^2\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon^2}{n^2\eta}.
+   \end{aligned}
+  \end{align}
+  Combining \eqref{equaiton-strongly-ff} and \eqref{equation-14},
+  with $1-2\delta$,
+  we have
+  \begin{align*}
+    R(\bar{f})-R(f_\ast)&\leq
+    \frac{16\beta \log(2m/\delta)}{n^2\eta}+\frac{128\beta R_\ast\log(2m/\delta)}{n\eta}+\frac{32\beta^2\epsilon^2}{\eta}+
+   \frac{64\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}+\\
+   &~~~~+
+   \frac{64\beta \log^2\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon^2}{n^2\eta}
+  -\frac{\eta}{4m^2}\sum_{i,j=1,i\not=j}^m\|\hat{f}_i-\hat{f}_j\|^2.
+  \end{align*}
+\end{proof}
+
+%\begin{theorem}
+%  At least $1-2\delta$,
+%  if
+%  \begin{align}
+%    \label{equation-12}
+%    n\geq \frac{4\beta\log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)}{\eta},
+%  \end{align}
+%  we have
+%  \begin{align}
+%    \label{equation-13}
+%    \begin{aligned}
+%    R(\hat{f}_i)-R(f_\ast)&\leq
+%    \frac{16\beta \log(2/\delta)}{n^2\eta}+\frac{128\beta R_\ast\log(2/\delta)}{n\eta}+\frac{32\beta^2\epsilon^2}{\eta}\\
+%    &~~~~+
+%   \frac{64\beta L \log\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon}{n\eta}+
+%   \frac{64\beta \log^2\left(\mathcal{N}(\mathcal{H},\epsilon)\right)\epsilon^2}{n^2\eta}
+%   \end{aligned}
+%  \end{align}
+%\end{theorem}
+\bibliographystyle{abbrv}
+\bibliography{NIPS2018}
+\end{document}
