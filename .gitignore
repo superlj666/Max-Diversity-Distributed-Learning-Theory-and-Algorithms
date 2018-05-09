@@ -1,10 +1,7 @@
 !.gitignore
 paper/*
 data/*
-code/dist-lr
-code/gaussian_regression_dist_demo_code
-code/mkl_c_samples
-related papers/*
+related/*
 !paper/NIPS2018.tex
 !paper/NIPS2018.pdf
 !paper/NIPS2018.bib
