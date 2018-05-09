@@ -8,16 +8,16 @@ class RidgeRegression {
 public:
   explicit RidgeRegression(Dataset& dataset, float lambda=0.1, float gamma=0.01, ps::KVWorker<float>* kv=NULL);
   virtual ~RidgeRegression() {
-    mkl_free(c0_);
-    mkl_free(b_);
-    mkl_free(cR_);
-    mkl_free(w_);
+    delete c0_;
+    delete b_;
+    delete wR_;
+    delete w_;
     if (kv_) {
       delete kv_;
     }
   }
 
-  float* GetCR_();
+  void SetwR_(vector<float> weights);
 
   float* Getw();
 
@@ -35,7 +35,7 @@ private:
 
   float* c0_;
   float* b_;
-  float* cR_;
+  float* wR_;
   float* w_;
 };
 

@@ -100,10 +100,42 @@ class Dataset
     float *label;
     explicit Dataset(int sample_size, int feature_size) : n(sample_size), d(feature_size)
     {
-        feature = (float *)mkl_malloc(n * d * sizeof(float), 64);
-        label = (float *)mkl_malloc(n * 1 * sizeof(float), 64);
+        feature = new float[n * d]();
+        label = new float[n]();
+    }
+
+    ~Dataset()
+    {
+        delete feature;
+        delete label;
     }
 };
+
+inline void
+PrintMatrix(int row, int column, float *data)
+{
+    for (int i = 0; i < row; ++i)
+    {
+        for (int j = 0; j < column; ++j)
+        {
+            cout << data[i * column + j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+inline void
+PrintMatrix(int row, int column, vector<float> data)
+{
+    for (int i = 0; i < row; ++i)
+    {
+        for (int j = 0; j < column; ++j)
+        {
+            cout << data[i * column + j] << " ";
+        }
+        cout << endl;
+    }
+}
 
 inline void
 GetPartA(float *X, int n, int d, float beta, float *A)
@@ -115,6 +147,9 @@ GetPartA(float *X, int n, int d, float beta, float *A)
 
     cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
                 d, d, n, 1 / (float)n, X, d, X, d, beta, A, d);
+
+    cout << "Print inversion matrix of A:" << endl;
+    PrintMatrix(d, d, A);
 }
 
 inline bool
@@ -133,19 +168,6 @@ GetPartb(float *X, float *y, int n, int d, float *b)
 {
     cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
                 d, 1, n, 1 / (float)n, X, d, y, 1, 0, b, 1);
-}
-
-inline void
-PrintMatrix(int row, int column, float *data)
-{
-    for (int i = 0; i < row; ++i)
-    {
-        for (int j = 0; j < column; ++j)
-        {
-            cout << data[i * column + j] << " ";
-        }
-        cout << endl;
-    }
 }
 
 inline void
@@ -169,19 +191,18 @@ LoadData(string filename, Dataset &data)
     }
 }
 
-inline 
-bool SaveModel(std::string &filename, int d)
+inline bool SaveModel(std::string &filename, float *weight, int d)
 {
     std::ofstream fout(filename.c_str());
     fout << d << std::endl;
     for (int i = 0; i < d; ++i)
     {
-        fout << w_[i] << ' ';
+        fout << weight[i] << ' ';
     }
     fout << std::endl;
     fout.close();
     return true;
 }
-}
+} // namespace rr
 
 #endif

@@ -1,4 +1,4 @@
-#include "lr/"
+#include "lr/util.h"
 #include <iostream>
 
 namespace distlr {

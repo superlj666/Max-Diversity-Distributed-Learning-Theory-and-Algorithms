@@ -27,16 +27,14 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include "mkl.h"
 #include "ridge_regression/ridge_regression.h"
-#include "ridge_regression/util.h"
 using namespace std;
 
 /* Consider adjusting LOOP_COUNT based on the performance of your computer */
 /* to make sure that total run time is at least 1 second */
 #define LOOP_COUNT 10
 
-int main()
+int main(int argc, char *argv[])
 {
     // float X[]={
     //     1,0,0,
@@ -113,15 +111,24 @@ int main()
     // mkl_free(cR_);
     // mkl_free(w_);
 
-    // 加载数据
-    rr::Dataset data(4177, 8);
-    rr::LoadData("abalone", data);
+    // // 加载数据
+    // rr::Dataset dataset_(4177, 8);
+    // rr::LoadData("abalone", dataset_);
 
-    // 计算inv(A),b
-    rr::RidgeRegression rr(data, 0.02, 0.01);
+    // // 计算inv(A),b
+    // rr::RidgeRegression rr(dataset_, 0.02, 0.01);
 
-    // 更新w
-    rr.Getw();
+    // vector<float> tmp = vector<float>(8,1);
+    // rr.SetwR_(tmp);
+    // // 更新w
+    // string str = "tmp.model";
+    // rr::SaveModel(str, rr.Getw(), 8);
+
+        string str = "test";
+        str += std::to_string(11);
+        str += ".model";
+    cout << str;
+
 
     return 0;
 }

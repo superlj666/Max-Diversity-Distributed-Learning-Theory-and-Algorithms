@@ -1,85 +1,142 @@
 #include <mkl.h>
 #include <math.h>
 #include "ps/ps.h"
+#include "ridge_regression/ridge_regression.h"
+#include<time.h>
 using namespace ps;
 
 /**
  * \brief a req_handle to process request in dc method
  */
 template <typename Val>
-struct KVServerDCHandle
+class KVDCServer
 {
 public:
-  void operator()(
-      const KVMeta &req_meta, const KVPairs<Val> &req_data, KVServer<Val> *server)
+  KVDCServer(float zeta, size_t d) : zeta_(zeta), d_(d)
   {
-    size_t d = req_data.keys.size();
-    KVPairs<Val> res;
+    using namespace std::placeholders;
+    ps_server_ = new KVServer<float>(0);
+    zeta_ = zeta;
+    weight_new = new float[d]();
+    weight_old = new float[d]();
+    round_ = 0;
+
+    ps_server_->set_request_handle(
+        std::bind(&KVDCServer::ReqHandle, this, _1, _2, _3));
+    std::cout << "start round " << round_ << std::endl;
+  }
+
+  ~KVDCServer()
+  {
+    delete weight_new;
+    delete weight_old;
+    if (ps_server_)
+    {
+      delete ps_server_;
+    }
+  }
+
+private:
+  void ReqHandle(const KVMeta &req_meta,
+                 const KVPairs<Val> &req_data,
+                 KVServer<Val> *server)
+  {
     if (req_meta.push)
     {
-      CHECK_EQ(d, req_data.vals.size());
+      CHECK_EQ(d_, req_data.vals.size());
 
-      // Record
-      reqs.push_back(make_pair(req_meta, req_data));
-      float var = 0;
-      for (size_t i = 0; i < d; ++i)
+      // Update
+      req_metas.push_back(req_meta);
+      if (req_datas.find(req_meta.sender) == req_datas.end())
       {
-        newer_w.push_back(req_data.vals[i]);
-        if (!older_w.empty())
+        req_datas[req_meta.sender] = std::vector<float>(d_);
+        weight_r[req_meta.sender] = std::vector<float>(d_);
+      }
+      std::cout << "push data from worker " << req_meta.sender << std::endl;
+      for (size_t i = 0; i < d_; ++i)
+      {
+        std::cout << req_data.vals[i] << " ";
+        weight_new[i] += req_data.vals[i];
+        req_datas[req_meta.sender][i] = req_data.vals[i];
+      }
+      std::cout << std::endl;
+
+      // Wait all push to Update wr and response
+      if (req_metas.size() == (size_t)NumWorkers())
+      {
+        float var = 0;
+        for (size_t i = 0; i < d_; ++i)
         {
-          var += pow(newer_w[i] - older_w[i], 2);
+          var += pow(weight_new[i] - weight_old[i], 2);
         }
         var = sqrt(var);
-      }
+        std::cout << "var: " << var << std::endl;
 
-      // Response
-      if (reqs.size() == (size_t)ps::NumWorkers())
-      {
-        for (auto &req : reqs)
+        for (auto &req : req_metas)
         {
-          if (var <= zeta)
+          if (var <= zeta_/d_)
           {
-            req.keys.clear();
-            req.vals.clear();
+            weight_r.clear();
           }
           else
           {
-            for (size_t i = 0; i < d; ++i)
+            for (size_t i = 0; i < d_; ++i)
             {
-              req.second.vals[i] = (newer_w[i] - req.second.vals[i]) / (float)(reqs.size() - 1);
+              weight_r[req.sender][i] = (weight_new[i] - req_datas[req.sender][i]) / (float)(req_metas.size() - 1);
             }
-            older_w=newer_w;
-            newer_w.clear();
           }
-          server->Response(req.first, req.second);
+          server->Response(req);
         }
-        reqs.clear();
-        w.clear();
+
+        req_metas.clear();
+
+        std::cout << "current weight: " << std::endl;
+        for (size_t i = 0; i < d_; ++i)
+        {
+          weight_old[i] = weight_new[i];
+          weight_new[i] = 0;
+          std::cout << weight_old[i] << " ";
+        }
+        std::cout << std::endl;
+        string str = "result/";
+        str += string(ps::Environment::Get()->find("FEATURE_SIZE")) + "_";
+        str += std::to_string(round_) + ".model";
+        rr::SaveModel(str, weight_old, d_);
+
+        round_++;
+        std::cout << std::endl;
+        std::cout << "start round " << round_ << std::endl;
       }
     }
     else
     {
-      // TODO
+      KVPairs<Val> res_data;
+
+      res_data.keys = req_data.keys;
+      res_data.vals.resize(d_, 0);
+
+      if (weight_r.find(req_meta.sender) != weight_r.end())
+      {
+        for (size_t i = 0; i < d_; ++i)
+        {
+          res_data.vals[i] = weight_r[req_meta.sender][i];
+        }
+      }
+      server->Response(req_meta, res_data);
     }
   }
-  static float zeta=1e-5;
 
-  std::vector<Key, Val> older_w;
-  std::vector<Key, Val> newer_w;
-  std::vector<pair<KVMeta &, KVPairs<Val> &>> reqs;
-};
+  float zeta_;
+  size_t d_;
+  KVServer<float> *ps_server_;
+  size_t round_;
 
-template <typename Val>
-struct KVWorkerDCHandle
-{
-public:
-  void operator()(
-      const KVMeta &req_meta, const KVPairs<Val> &req_data, KVServer<Val> *server)
-  {
-    wr = req_data.vals;
-  }
+  std::vector<KVMeta> req_metas;
+  std::unordered_map<size_t, std::vector<float>> req_datas;
 
-  static std::vector<float> &wr;
+  float *weight_new;
+  float *weight_old;
+  std::unordered_map<size_t, std::vector<float>> weight_r;
 };
 
 void StartServer()
@@ -88,49 +145,77 @@ void StartServer()
   {
     return;
   }
-  auto server = new KVServer<float>(0);
-  // KVServerDCHandle<float>::zeta = 1e-5;
-
-  server->set_request_handle(KVServerDCHandle<float>());
+  auto server = new KVDCServer<float>(rr::ToFloat(ps::Environment::Get()->find("ZETA")),
+                                      rr::ToInt(ps::Environment::Get()->find("FEATURE_SIZE")));
   RegisterExitCallback([server]() { delete server; });
 }
 
-void RunWorker()
+void RunWorker(int argc, char *argv[])
 {
-  if (!IsWorker())
+  if (!IsWorker() || argc < 2)
     return;
   KVWorker<float> kv(0, 0);
-  int max_iter = 10;
 
-  // init
-  int num = 10;
-  std::vector<Key> keys(num);
-  std::vector<float> vals(num);
-  // kv.set_response_handle(KVWorkerDCHandle<float>());
+  // 加载数据
+  int n = rr::ToInt(ps::Environment::Get()->find("SAMPLE_SIZE"));
+  int d = rr::ToInt(ps::Environment::Get()->find("FEATURE_SIZE"));
+  float lambda = rr::ToFloat(ps::Environment::Get()->find("LAMBDA"));
+  float gamma = rr::ToFloat(ps::Environment::Get()->find("GAMMA"));
+  std::cout << "sample size: " << n << std::endl;
 
-  for (int i = 0; i < num; ++i)
-  {
-    keys[i] = i;
-    vals[i] = i;
-  }
+  rr::Dataset dataset_(n, d);
+  rr::LoadData(argv[1], dataset_);
+  std::vector<Key> keys(d);
+  std::vector<float> vals(d);
+
+  // 计算inv(A),b,c0
+  rr::RidgeRegression rr(dataset_, lambda, gamma);
 
   // push
-  for (int i = 0; i < max_iter && !vals.empty(); ++i)
+  for (size_t j = 0; j < rr::ToInt(ps::Environment::Get()->find("MAX_ITERATION")) && !vals.empty(); ++j)
   {
-    // TODO. Actual update
+    float *current_w = rr.Getw();
+    for (size_t i = 0; i < d; ++i)
+    {
+      keys[i] = i;
+      vals[i] = current_w[i];
+    }
+
+    bool finished = true;
+    // Actual update
     kv.Wait(kv.Push(keys, vals));
+    kv.Wait(kv.Pull(keys, &vals));
+
+    std::cout << "Responsed wR : " << std::endl;
+    for (size_t i = 0; i < d; ++i)
+      std::cout << vals[i] << " ";
+    std::cout << std::endl;
+
+    for (size_t i = 0; i < d; ++i)
+    {
+      if (vals[i] != 0)
+        finished = false;
+    }
+
+    if (finished)
+      break;
+
+    rr.SetwR_(vals);
   }
 }
 
 int main(int argc, char *argv[])
 {
+  clock_t tic = clock();
   // start system
   Start(0);
   // setup server nodes
   StartServer();
   // run worker nodes
-  RunWorker();
+  RunWorker(argc, argv);
   // stop system
   Finalize(0, true);
+  clock_t toc = clock();
+  std::cout << "Use time: " << (double)(toc-tic)/CLOCKS_PER_SEC << "second" << std::endl;
   return 0;
 }
