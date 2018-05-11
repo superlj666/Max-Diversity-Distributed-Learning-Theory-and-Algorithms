@@ -12,6 +12,11 @@ ar crv build/librr.a build/kernel_ridge_regression.o
 g++ -std=c++0x -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -MM -MT tests/test_tmp tests/test_tmp.cc >tests/test_tmp.d
 g++ -std=c++0x -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -o tests/test_tmp tests/test_tmp.cc build/librr.a ./ps-lite/build/libps.a -Wl,-rpath,./ps-lite/deps/lib  -L./ps-lite/deps/lib  -lprotobuf-lite -lzmq -pthread -L/opt/intel/mkl/lib/intel64 -L/opt/intel/lib/intel64
 
+# gaussian_kernel
+g++ -std=c++0x -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -MM -MT tests/test_gaussian_kernel tests/test_gaussian_kernel.cc >tests/test_gaussian_kernel.d
+g++ -std=c++0x -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -o tests/test_gaussian_kernel tests/test_gaussian_kernel.cc build/librr.a ./ps-lite/build/libps.a -Wl,-rpath,./ps-lite/deps/lib  -L./ps-lite/deps/lib  -lprotobuf-lite -lzmq -pthread -L/opt/intel/mkl/lib/intel64 -L/opt/intel/lib/intel64
+
+
 # rr_central
 g++ -std=c++0x -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -MM -MT tests/test_rr_central tests/test_rr_central.cc >tests/test_rr_central.d
 g++ -std=c++0x -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -o tests/test_rr_central tests/test_rr_central.cc build/librr.a ./ps-lite/build/libps.a -Wl,-rpath,./ps-lite/deps/lib  -L./ps-lite/deps/lib  -lprotobuf-lite -lzmq -pthread -L/opt/intel/mkl/lib/intel64 -L/opt/intel/lib/intel64

@@ -10,7 +10,7 @@
 #include "mkl.h"
 using namespace std;
 
-namespace rrYearPredictionMSD
+namespace rr
 {
 
 inline int ToInt(const char *str)
@@ -273,6 +273,43 @@ inline void GaussianKernel(Dataset &data, float *kernel, float sigma)
         }
     }
     delete norms;
+}
+
+// K=exp(-\frac{\|x_i, x_j\|}{2\sigma^2})
+inline void GaussianKernel(Dataset &left, Dataset &right, float *kernel, float sigma)
+{
+    int n_left = left.n;
+    int d = left.d;
+    int n_right = right.n;
+
+    float *norms_left = new float[n_left]();
+    float *norms_right = new float[n_right]();
+    // square sum of rows
+    for (size_t j = 0; j < d; ++j)
+    {
+        for (size_t i = 0; i < n_left; ++i)
+        {
+            norms_left[i] += pow(left.feature[i * d + j], 2);
+        }
+        for (size_t i = 0; i < n_right; ++i)
+        {
+            norms_right[i] += pow(right.feature[i * d + j], 2);
+        }
+    }
+    // -\|x_i-x_j\|
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                n_left, n_right, d, 2, left.feature, d, right.feature, d, 0, kernel, n_right);
+
+    // K=exp(-\frac{\|x_i, x_j\|}{2\sigma^2})
+    for (size_t i = 0; i < n_left; ++i)
+    {
+        for (size_t j = 0; j < n_right; ++j)
+        {
+            kernel[i * n_right + j] = exp((kernel[i * n_right + j] - norms_left[i] - norms_right[j])/ (2 * pow(sigma, 2)));
+        }
+    }
+    delete norms_left;
+    delete norms_right;
 }
 
 inline void Predict(Dataset &test, float *weight, float *predict)
