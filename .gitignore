@@ -1,7 +1,8 @@
 !.gitignore
+!.vscode
 paper/*
-data/*
 related/*
+experiment/data/*
 !paper/NIPS2018.tex
 !paper/NIPS2018.pdf
 !paper/NIPS2018.bib

@@ -73,29 +73,28 @@ float *RidgeRegression::Getw()
   {
     w_[i] = c0_[i] - gamma_ * tmp_const / b_[i];
   }
-  cout << "Print vector of w:" << endl;
-  PrintMatrix(dataset_.d, 1, w_);
+  // cout << "Print vector of w:" << endl;
+  // PrintMatrix(dataset_.d, 1, w_);
   return w_;
 }
 
-void RidgeRegression::Predict(Dataset &test, float *result)
+inline void Predict(Dataset &test, float* weight, float *predict)
 {
   cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-              test.n, 1, test.d, 1, test.feature, test.d, w_, 1, 0, result, 1);
+              test.n, 1, test.d, 1, test.feature, test.d, weight, 1, 0, predict, 1);
   cout << "Print vector of predict:" << endl;
-  PrintMatrix(test.n, 1, result);
+  PrintMatrix(test.n, 1, predict);
 }
 
-float RidgeRegression::MSE(Dataset &test)
+inline float MSE(Dataset &test, float* weight)
 {
   float *predict = new float[test.d]();
-  Predict(test, predict);
+  Predict(test, weight, predict);
   float mse = 0;
   for (int i = 0; i < test.n; ++i)
   {
     mse += pow(predict - test.label, 2);
   }
-  delete predict;
   return mse / test.n;
 }
 } // namespace rr
