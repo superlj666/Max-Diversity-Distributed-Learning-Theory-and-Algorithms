@@ -18,11 +18,11 @@ export DMLC_NUM_WORKER=$1
 shift
 
 file_name=$1
-test_path_prefix=($(pwd)/data/$1/)
-train_path_prefix=($(pwd)/data/$1/train)
-export FEATURE_SIZE=$[$(head -1 ${test_path_prefix}test | awk  '{print NF}')-1]
-export TRAIN_SAMPLE_SIZE=$(cat ${train_path_prefix}_1 | wc -l)
-export TEST_SAMPLE_SIZE=$(cat ${test_path_prefix}test | wc -l)
+export DATA_PATH=$(pwd)/data/$1/
+export KERNEL_PATH=$(pwd)/data/kernel/$1/
+export FEATURE_SIZE=$[$(head -1 ${DATA_PATH}train_00 | awk  '{print NF}')-1]
+export TRAIN_SAMPLE_SIZE=$(cat ${DATA_PATH}train_00 | wc -l)
+export TEST_SAMPLE_SIZE=$(cat ${DATA_PATH}test_00 | wc -l)
 
 shift
 
@@ -50,14 +50,14 @@ ${bin} &
 export DMLC_ROLE='server'
 for ((i=0; i<${DMLC_NUM_SERVER}; ++i)); do
     export HEAPPROFILE=./S${i}
-    ${bin} ${test_path_prefix} > log/${file_name}/${kind}_${method}_server${i}.log&
+    ${bin} > log/${file_name}/${kind}_${method}_server${i}.log & 
 done
 
 # start workers
 export DMLC_ROLE='worker'
 for ((i=0; i<${DMLC_NUM_WORKER}; ++i)); do
     export HEAPPROFILE=./W${i}
-    ${bin} ${train_path_prefix}_${i} $(cat ${train_path_prefix}_${i} | wc -l) $[$(head -1 ${train_path_prefix}_${i} | awk  '{print NF}')-1]  > log/${file_name}/${kind}_${method}_worker${i}.log&
+    ${bin} $i > log/${file_name}/${kind}_${method}_worker${i}.log &
 done
 
 wait

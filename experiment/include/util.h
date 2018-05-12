@@ -92,6 +92,15 @@ Split(std::string line, char sparator)
     return ret;
 }
 
+inline bool LoadModelToBinary(const char *filename, float *matrix, int n, int d)
+{
+    std::ifstream fin(filename, ios::binary);
+    fin.read((char *)matrix, (n * d) * sizeof(float));
+    fin.close();
+    return true;
+}
+
+
 class Dataset
 {
   public:
@@ -109,6 +118,24 @@ class Dataset
     {
         delete feature;
         delete label;
+    }
+};
+
+class KernelData
+{
+  public:
+    int row_size;
+    int column_size;
+    float *kernel;
+    explicit KernelData(string file_path, int left_size, int right_size) : row_size(left_size), column_size(right_size)
+    {
+        kernel = new float[row_size * column_size]();
+        LoadModelToBinary(file_path.c_str(), kernel, row_size, column_size);
+    }
+
+    ~KernelData()
+    {
+        delete kernel;
     }
 };
 
@@ -235,14 +262,6 @@ inline bool SaveModelToBinary(const char *filename, float *matrix, int n, int d)
     return true;
 }
 
-inline bool LoadModelToBinary(const char *filename, float *matrix, int n, int d)
-{
-    std::ifstream fin(filename, ios::binary);
-    fin.read((char *)matrix, (n * d) * sizeof(float));
-    fin.close();
-    return true;
-}
-
 // K=exp(-\frac{\|x_i, x_j\|}{2\sigma^2})
 inline void GaussianKernel(Dataset &data, float *kernel, float sigma)
 {
@@ -305,11 +324,68 @@ inline void GaussianKernel(Dataset &left, Dataset &right, float *kernel, float s
     {
         for (size_t j = 0; j < n_right; ++j)
         {
-            kernel[i * n_right + j] = exp((kernel[i * n_right + j] - norms_left[i] - norms_right[j])/ (2 * pow(sigma, 2)));
+            kernel[i * n_right + j] = exp((kernel[i * n_right + j] - norms_left[i] - norms_right[j]) / (2 * pow(sigma, 2)));
         }
     }
     delete norms_left;
     delete norms_right;
+}
+
+/*
+Define kernel matrix: kernel[m, n]
+for i < m :
+    read line_left in file_left;
+    for j < n:
+        read line_right in file_right:
+        for cur in d:
+            norm+=pow(line_left[i]-line_right[j], 2);
+        kernel[i*n+j]=exp(-norm/(2*sigma^2));
+*/
+inline void HDGaussianKernel(string path_left, string path_right, int left_size, int right_size, int d, float *kernel, float sigma)
+{
+    std::ifstream file_left(path_left.c_str());
+    std::string line_left, buf_left;
+
+    int cursor_left = 0;
+    while (std::getline(file_left, line_left))
+    {
+        std::ifstream file_right(path_right.c_str());
+        std::string line_right, buf_right;
+
+        int cursor_right = 0;
+        while (std::getline(file_right, line_right))
+        {
+            float *feature_left = new float[d]();
+            std::istringstream in_left(line_left);
+            in_left >> buf_left;
+            while (in_left >> buf_left)
+            {
+                auto ss_left = Split(buf_left, ':');
+                feature_left[ToInt(ss_left[0]) - 1] = ToFloat(ss_left[1]);
+            }
+
+            float *feature_right = new float[d]();
+            std::istringstream in_right(line_right);
+            in_right >> buf_right;
+            while (in_right >> buf_right)
+            {
+                auto ss_right = Split(buf_right, ':');
+                feature_right[ToInt(ss_right[0]) - 1] = ToFloat(ss_right[1]);
+            }
+
+            float square_sum = 0;
+            for (int i = 0; i < d; ++i)
+            {
+                square_sum += pow(feature_left[i] - feature_right[i], 2);
+            }
+
+            kernel[cursor_left * right_size + cursor_right] = exp(-square_sum / (2 * pow(sigma, 2)));
+
+            delete feature_left;
+            delete feature_right;
+        }
+        cursor_left++;
+    }
 }
 
 inline void Predict(Dataset &test, float *weight, float *predict)
@@ -318,6 +394,13 @@ inline void Predict(Dataset &test, float *weight, float *predict)
                 test.n, 1, test.d, 1, test.feature, test.d, weight, 1, 0, predict, 1);
     // cout << "Print vector of predict:" << endl;
     // PrintMatrix(test.n, 1, result);
+}
+
+inline void KernelPredict(KernelData &pre_kernel, float *weight, float *predict)
+{
+    cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+                pre_kernel.column_size, 1, pre_kernel.row_size, 1, pre_kernel.kernel, pre_kernel.column_size, weight, 1, 0, predict, 1);
+
 }
 
 inline void KRRPredict(Dataset &train, Dataset &test, float *weight, float *predict, float sigma)
@@ -352,7 +435,7 @@ inline void KRRPredict(Dataset &train, Dataset &test, float *weight, float *pred
     {
         for (size_t j = 0; j < n_train; ++j)
         {
-            predict[i] += weight[j]*exp((kernel[i * n_train + j] - norms_test[i] - norms_train[j])/ (2 * pow(sigma, 2)));
+            predict[i] += weight[j] * exp((kernel[i * n_train + j] - norms_test[i] - norms_train[j]) / (2 * pow(sigma, 2)));
         }
     }
     delete norms_train;

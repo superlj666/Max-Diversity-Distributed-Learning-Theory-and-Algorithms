@@ -8,6 +8,11 @@ g++ -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -std=c++0x -MM
 g++ -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH  -c src/kernel_ridge_regression.cc -o build/kernel_ridge_regression.o
 ar crv build/librr.a build/kernel_ridge_regression.o
 
+# dist_krr
+g++ -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -std=c++0x -MM -MT build/dist_krr.o src/dist_krr.cc >build/dist_krr.d
+g++ -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH  -c src/dist_krr.cc -o build/dist_krr.o
+ar crv build/librr.a build/dist_krr.o
+
 # tmp
 g++ -std=c++0x -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -MM -MT tests/test_tmp tests/test_tmp.cc >tests/test_tmp.d
 g++ -std=c++0x -std=c++11 -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -I./src -I./include -I./ps-lite/include -I$CPLUS_INCLUDE_PATH -o tests/test_tmp tests/test_tmp.cc build/librr.a ./ps-lite/build/libps.a -Wl,-rpath,./ps-lite/deps/lib  -L./ps-lite/deps/lib  -lprotobuf-lite -lzmq -pthread -L/opt/intel/mkl/lib/intel64 -L/opt/intel/lib/intel64

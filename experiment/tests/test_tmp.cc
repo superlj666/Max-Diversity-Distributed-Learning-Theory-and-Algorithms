@@ -37,6 +37,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
+     clock_t tic = clock();
     // float X[]={
     //     1,0,0,
     //     0,1,0,
@@ -155,19 +156,59 @@ int main(int argc, char *argv[])
     // toc = clock();
     // cout << "LoadModelToBinary cost :" << (double)(toc - tic) / CLOCKS_PER_SEC << "second" << std::endl;
 
-    unsigned char* tmp= new unsigned char[rr::ToInt(argv[1])];
+    // unsigned char* tmp= new unsigned char[rr::ToInt(argv[1])];
 
-    int n = 600;
-    int d = 8;
-    float lambda = 0.02;
-    float gamma = 0.01;
-    cout << "sample size: " << n << endl;
+    // int n = 600;
+    // int d = 8;
+    // float lambda = 0.02;
+    // float gamma = 0.01;
+    // cout << "sample size: " << n << endl;
 
-    rr::Dataset dataset_(n, d);
-    rr::LoadData(argv[1], dataset_);
+    // rr::Dataset dataset_(n, d);
+    // rr::LoadData(argv[1], dataset_);
 
-    // 计算inv(A),b,c0
-    rr::RidgeRegression rr(dataset_, 0.02, 0.01);
+    // // 计算inv(A),b,c0
+    // rr::RidgeRegression rr(dataset_, 0.02, 0.01);
+
+    // clock_t tic = clock();
+    // float *kernel = new float[20000 * 20000]();
+    // rr::LoadModelToBinary("data/kernel/abalone/test_00-test_00", kernel, 20000, 20000);
+    // clock_t toc = clock();
+    // cout << "LoadModelToBinary cost :" << (double)(toc - tic) / CLOCKS_PER_SEC << "second" << std::endl;
+
+   
+    // if (argc < 7)
+    // {
+    //     cout << "Usage: left_file right_file left_size right_size feature_size sigma save_path" << endl;
+    //     return -1;
+    // }
+
+    // string left_file = argv[1];
+    // string right_file = argv[2];
+    // int left_size = rr::ToInt(argv[3]);
+    // int right_size = rr::ToInt(argv[4]);
+    // int feature_size = rr::ToInt(argv[5]);
+    // float sigma = rr::ToFloat(argv[6]);
+    // string save_path = argv[7];
+
+    // float *kernel = new float[left_size * right_size]();
+
+    // // Low Dimensional
+    // rr::Dataset left(left_size, feature_size);
+    // rr::Dataset right(right_size, feature_size);
+    // rr::LoadData(left_file, left);
+    // rr::LoadData(right_file, right);
+    // rr::GaussianKernel(left, right, kernel, sigma);
+
+    // High Dimensional
+    // rr::HDGaussianKernel(left_file, right_file, left_size, right_size, feature_size, kernel, sigma);
+    // rr::SaveModel(save_path.c_str(), kernel, left_size, right_size);
+
+    rr::KernelData selfKernel(argv[1], 557, 557);
+    rr::PrintMatrix(557, 557, selfKernel.kernel);
+
+    clock_t toc = clock();
+    cout << "cost :" << (double)(toc - tic) / CLOCKS_PER_SEC << "second" << std::endl;
 
     return 0;
 }

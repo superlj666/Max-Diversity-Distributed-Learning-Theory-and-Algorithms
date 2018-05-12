@@ -46,16 +46,25 @@ int main(int argc, char *argv[])
     int feature_size = rr::ToInt(argv[5]);
     float sigma = rr::ToFloat(argv[6]);
     string save_path = argv[7];
-    
 
-    rr::Dataset left(left_size, feature_size);
-    rr::Dataset right(right_size, feature_size);
-    rr::LoadData(left_file, left);
-    rr::LoadData(right_file, right);
 
-    float *kernel = new float[left_size * right_size]();
-    rr::GaussianKernel(left, right, kernel, sigma);
-    rr::SaveModel(save_path.c_str(), kernel, left_size, right_size);
+    // The kernel matrix must less than 2G
+    float *kernel = new float[left_size * right_size]();    
+    if (left_size * feature_size <= 512 * 1024 * 1024 && right_size * feature_size <= 512 * 1024 * 1024)
+    {
+        rr::Dataset left(left_size, feature_size);
+        rr::Dataset right(right_size, feature_size);
+        rr::LoadData(left_file, left);
+        rr::LoadData(right_file, right);
+
+        rr::GaussianKernel(left, right, kernel, sigma);
+    } // High demensional problem
+    else
+    {
+        rr::HDGaussianKernel(left_file, right_file, left_size, right_size, feature_size, kernel, sigma);
+    }
+
+    rr::SaveModelToBinary(save_path.c_str(), kernel, left_size, right_size);
     delete kernel;
 
     return 0;

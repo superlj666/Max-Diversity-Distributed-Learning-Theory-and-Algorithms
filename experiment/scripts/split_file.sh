@@ -38,6 +38,7 @@ if [ $# -lt 3 ]; then
 else
     if [ ${sample_size} -gt 100000 ];then 
         split_size=20000
+        splits=$[${sample_size}/20000]
     else
         splits=5
         split_size=$[${sample_size}/5]
@@ -52,4 +53,8 @@ else
     cp ${test_path} ${file_path}_test_all
     split -l ${split_size} ${file_path}_train_all -d -a 2 ${divided_path}/train_
     split -l 20000 ${file_path}_test_all -d -a 2 ${divided_path}/test_
+
+    if [ -d ${divided_path}/train_$(printf "%02d" ${split}) ];then
+        rm -rf ${divided_path}/train_$(printf "%02d" ${split})
+    fi
 fi

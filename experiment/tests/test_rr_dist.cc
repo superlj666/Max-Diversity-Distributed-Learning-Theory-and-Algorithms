@@ -20,8 +20,10 @@ public:
     ps_server_ = new KVServer<float>(0);
     zeta_ = rr::ToFloat(ps::Environment::Get()->find("ZETA"));
     
-    file_path_ = argv[1];
-    file_path_ += "test";
+    file_path_ += ps::Environment::Get()->find("DATA_PATH");
+    file_path_ += "test_00";
+    cout << "test_file: " << file_path_ << endl;
+
     test_sample_size_ = rr::ToInt(ps::Environment::Get()->find("TEST_SAMPLE_SIZE"));
     d_ = rr::ToInt(ps::Environment::Get()->find("FEATURE_SIZE"));
     workers_ = rr::ToFloat(ps::Environment::Get()->find("DMLC_NUM_WORKER"));
@@ -97,9 +99,9 @@ private:
         float var = 0;
         for (int i = 0; i < d_; ++i)
         {
-          var += pow(weight_new[i]/workers_ - weight_old[i]/workers_, 2);
+          var += pow(weight_new[i] / workers_ - weight_old[i] / workers_, 2);
         }
-        var = sqrt(var/d_/workers_);
+        var = sqrt(var / d_ / workers_);
         cout << "var: " << var << endl;
 
         for (auto &req : req_metas)
@@ -182,13 +184,27 @@ void RunWorker(int argc, char *argv[])
   KVWorker<float> kv(0, 0);
 
   // 加载数据
-  int n = rr::ToInt(argv[2]);
-  int d = rr::ToInt(argv[3]);
+  int n = rr::ToInt(ps::Environment::Get()->find("TRAIN_SAMPLE_SIZE"));
+  int d = rr::ToInt(ps::Environment::Get()->find("FEATURE_SIZE"));
   float lambda = rr::ToFloat(ps::Environment::Get()->find("LAMBDA"));
   float gamma = rr::ToFloat(ps::Environment::Get()->find("GAMMA"));
 
   rr::Dataset dataset_(n, d);
-  rr::LoadData(argv[1], dataset_);
+  string file_path(ps::Environment::Get()->find("DATA_PATH"));
+  file_path += "train_";
+  if (rr::ToInt(argv[1]) > 9)
+  {
+    file_path += argv[1];
+  }
+  else
+  {
+    file_path += "0";
+    file_path += argv[1];
+  }
+
+  cout << "file_path: " << file_path << endl;
+
+  rr::LoadData(file_path, dataset_);
   vector<Key> keys(d);
   vector<float> vals(d);
 

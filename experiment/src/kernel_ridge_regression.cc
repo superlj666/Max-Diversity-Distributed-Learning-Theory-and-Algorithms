@@ -46,7 +46,7 @@ bool KernelRidgeRegression::GetW0()
   // Part A
   for (int i = 0; i < n; ++i)
   {
-    K[i * n + i] += lambda_;
+    K[i * n + i] += lambda_ ;
   }
 
   // Inversion of Part A
