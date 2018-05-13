@@ -78,24 +78,5 @@ float *RidgeRegression::Getw()
   return w_;
 }
 
-inline void Predict(Dataset &test, float* weight, float *predict)
-{
-  cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-              test.n, 1, test.d, 1, test.feature, test.d, weight, 1, 0, predict, 1);
-  cout << "Print vector of predict:" << endl;
-  PrintMatrix(test.n, 1, predict);
-}
-
-inline float MSE(Dataset &test, float* weight)
-{
-  float *predict = new float[test.d]();
-  Predict(test, weight, predict);
-  float mse = 0;
-  for (int i = 0; i < test.n; ++i)
-  {
-    mse += pow(predict - test.label, 2);
-  }
-  return mse / test.n;
-}
 } // namespace rr
 // namespace distlr

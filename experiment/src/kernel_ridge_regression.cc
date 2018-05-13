@@ -13,17 +13,7 @@ KernelRidgeRegression::KernelRidgeRegression(Dataset &dataset, float lambda, flo
     : dataset_(dataset), lambda_(lambda), gamma_(gamma), sigma_(sigma)
 {
   w0_ = new float[dataset.n]();
-  wR_ = new float[dataset.n]();
-  w_ = new float[dataset.n]();
   GetW0();
-}
-
-void KernelRidgeRegression::SetwR_(vector<float> weights)
-{
-  for (auto i = 0; i < weights.size(); ++i)
-  {
-    wR_[i] = weights[i];
-  }
 }
 
 bool KernelRidgeRegression::GetW0()
@@ -49,6 +39,7 @@ bool KernelRidgeRegression::GetW0()
     K[i * n + i] += lambda_ ;
   }
 
+
   // Inversion of Part A
   if (!MatrixInversion(K, n))
   {
@@ -59,7 +50,7 @@ bool KernelRidgeRegression::GetW0()
   // y is the Part b
   // calculate w0_
   cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-              n, 1, n, 1/(float)n, K, n, y, 1, 0, w0_, 1);
+              n, 1, n, 1, K, n, y, 1, 0, w0_, 1);
 
   delete K;
   return true;
@@ -67,16 +58,7 @@ bool KernelRidgeRegression::GetW0()
 
 float *KernelRidgeRegression::Getw()
 {
-  float tmp_const = 0;
-  for (int i = 0; i < dataset_.n; ++i)
-  {
-    tmp_const += wR_[i] * w0_[i];
-  }
-  for (int i = 0; i < dataset_.n; ++i)
-  {
-    w_[i] = w0_[i] - dataset_.n * gamma_ * tmp_const / dataset_.label[i];
-  }
-  return w_;
+  return w0_;
 }
 } // namespace krr
 // namespace distlr

@@ -13,7 +13,7 @@ public:
     delete w_;
   }
 
-  void SetwR_(vector<float> weights);
+  void SetwR_(float* weights);
 
   float* Getw();
 

@@ -19,7 +19,7 @@ public:
 
     ps_server_ = new KVServer<float>(0);
     zeta_ = rr::ToFloat(ps::Environment::Get()->find("ZETA"));
-    
+
     file_path_ += ps::Environment::Get()->find("DATA_PATH");
     file_path_ += "test_00";
     cout << "test_file: " << file_path_ << endl;
@@ -189,7 +189,6 @@ void RunWorker(int argc, char *argv[])
   float lambda = rr::ToFloat(ps::Environment::Get()->find("LAMBDA"));
   float gamma = rr::ToFloat(ps::Environment::Get()->find("GAMMA"));
 
-  rr::Dataset dataset_(n, d);
   string file_path(ps::Environment::Get()->find("DATA_PATH"));
   file_path += "train_";
   if (rr::ToInt(argv[1]) > 9)
@@ -201,9 +200,9 @@ void RunWorker(int argc, char *argv[])
     file_path += "0";
     file_path += argv[1];
   }
-
   cout << "file_path: " << file_path << endl;
 
+  rr::Dataset dataset_(n, d);
   rr::LoadData(file_path, dataset_);
   vector<Key> keys(d);
   vector<float> vals(d);

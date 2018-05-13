@@ -8,7 +8,7 @@ start_tm=`date +%s%N`;
 
 export MAX_ITERATION=50
 export ZETA=0.000001
-export LAMBDA=0.02
+export LAMBDA=0.01
 export GAMMA=0.01
 export SIGMA=2
 

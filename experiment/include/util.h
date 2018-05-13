@@ -100,7 +100,6 @@ inline bool LoadModelToBinary(const char *filename, float *matrix, int n, int d)
     return true;
 }
 
-
 class Dataset
 {
   public:
@@ -288,7 +287,7 @@ inline void GaussianKernel(Dataset &data, float *kernel, float sigma)
     {
         for (size_t j = 0; j < n; ++j)
         {
-            kernel[i * n + j] = exp((kernel[i * n + j] - norms[i] - norms[j]) / (2 * pow(sigma, 2))) / n;
+            kernel[i * n + j] = exp((kernel[i * n + j] - norms[i] - norms[j]) / (2 * pow(sigma, 2)));
         }
     }
     delete norms;
@@ -400,7 +399,6 @@ inline void KernelPredict(KernelData &pre_kernel, float *weight, float *predict)
 {
     cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
                 pre_kernel.column_size, 1, pre_kernel.row_size, 1, pre_kernel.kernel, pre_kernel.column_size, weight, 1, 0, predict, 1);
-
 }
 
 inline void KRRPredict(Dataset &train, Dataset &test, float *weight, float *predict, float sigma)
@@ -451,6 +449,21 @@ inline float MSE(Dataset &test, float *predict)
         mse += pow(predict[i] - test.label[i], 2);
     }
     return sqrt(mse / (float)test.n);
+}
+
+inline string ID2string(int id)
+{
+    string name;
+    if (id > 9)
+    {
+        name += to_string(id);
+    }
+    else
+    {
+        name += "0";
+        name += to_string(id);
+    }
+    return name;
 }
 
 } // namespace rr

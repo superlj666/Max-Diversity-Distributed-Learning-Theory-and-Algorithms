@@ -9,11 +9,7 @@ public:
   explicit KernelRidgeRegression(Dataset& dataset, float lambda=0.1, float gamma=0.01, float sigma_=2);
   virtual ~KernelRidgeRegression() {
     delete w0_;
-    delete wR_;
-    delete w_;
   }
-
-  void SetwR_(vector<float> weights);
 
   float* Getw();
 
@@ -26,8 +22,6 @@ private:
   float sigma_;
 
   float* w0_;
-  float* wR_;
-  float* w_;
 };
 
 }  // namespace distlr

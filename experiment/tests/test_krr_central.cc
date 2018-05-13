@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
     string file_name = argv[1];
     string train_path = argv[2];
     string test_path = argv[3];
+    
     int train_size = rr::ToInt(argv[4]);
     int test_size = rr::ToInt(argv[5]);
     int feature_size = rr::ToInt(argv[6]);
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
     rr::LoadData(test_path, test);
 
     // 计算inv(A),b
-    rr::KernelRidgeRegression kRegression(train, 0.02, 0.01, 2);
+    rr::KernelRidgeRegression kRegression(train, 0.01, 0.01, 2);
 
     // 计算w并保存
     float *central_w = kRegression.Getw();

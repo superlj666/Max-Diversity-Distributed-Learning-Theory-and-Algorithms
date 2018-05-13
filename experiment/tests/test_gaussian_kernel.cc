@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
         rr::HDGaussianKernel(left_file, right_file, left_size, right_size, feature_size, kernel, sigma);
     }
 
+    // rr::SaveModel(save_path.c_str(), kernel, left_size, right_size);
     rr::SaveModelToBinary(save_path.c_str(), kernel, left_size, right_size);
     delete kernel;
 
