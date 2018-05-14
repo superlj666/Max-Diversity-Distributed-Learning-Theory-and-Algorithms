@@ -27,10 +27,11 @@ public:
     round_ = 0;
     var_ = 0;
     finished_ = false;
+    total_size = workers_ * train_size_;
 
     mean_predict = new float[rr::ToInt(ps::Environment::Get()->find("TEST_SAMPLE_SIZE"))]();
+    all_weight_ = new float[total_size]();
 
-    all_weight_.resize(workers_ * train_size_, 0);
     cout << "start round " << round_ << endl;
 
     using namespace placeholders;
@@ -41,6 +42,7 @@ public:
   ~KVDCServer()
   {
     delete mean_predict;
+    delete all_weight_;
     if (ps_server_)
     {
       delete ps_server_;
@@ -112,25 +114,29 @@ private:
             server->Response(req);
           }
           req_metas_.clear();
+
+          return;
         }
       }
       else
       {
         // Update
-        cout << "all weight size: " << all_weight_.size() << endl;
+        cout << "all weight size: " << total_size << endl;
         for (int i = 0; i < req_data.vals.size(); ++i)
         {
           int index = id_file_rank_[req_meta.sender] * train_size_ + i;
           var_ += pow(all_weight_[index] - req_data.vals[i], 2);
+          cout << var_ << " ";
           all_weight_[index] = req_data.vals[i];
         }
+        cout << endl;
 
         cout << req_metas_.size() << " " << NumWorkers() << endl;
         // Wait all push to Update wr and response
         if (req_metas_.size() == (int)NumWorkers())
         {
           // Compute variation
-          var_ = sqrt(var_ / (float)all_weight_.size());
+          var_ = sqrt(var_ / (float)total_size);
           cout << "var_: " << var_ << endl;
           if (var_ <= zeta_ || round_ == rr::ToInt(ps::Environment::Get()->find("MAX_ITERATION")) - 1)
           {
@@ -157,16 +163,17 @@ private:
     {
       cout << "pull request " << endl;
       KVPairs<Val> res_data;
+      res_data.keys = req_data.keys;
+      res_data.vals.resize(total_size, 0);
 
       if (!finished_)
       {
-        res_data.keys = req_data.keys;
-        res_data.vals = SArray<float>(all_weight_);
-        cout << res_data.vals.size() << "---" << endl;
+        for (int i = 0; i < total_size; ++i)
+        {
+          res_data.vals[i] = all_weight_[i];
+        }
       }
-
-      res_data.keys = req_data.keys;
-      res_data.vals.resize(workers_ * train_size_, 0);
+      
       server->Response(req_meta, res_data);
 
       cout << "response pull...." << endl;
@@ -183,8 +190,9 @@ private:
 
   vector<KVMeta> req_metas_;
   unordered_map<int, int> id_file_rank_;
-  vector<float> all_weight_;
+  float *all_weight_;
   float *mean_predict;
+  int total_size;
 };
 
 void StartServer(int argc, char *argv[])

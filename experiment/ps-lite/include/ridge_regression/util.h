@@ -146,7 +146,7 @@ GetPartA(float *X, int n, int d, float beta, float *A)
     }
 
     cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-                d, d, n, 1 / (float)n, X, d, X, d, beta, A, d);
+                d, d, n, 1, X, d, X, d, beta, A, d);
 
     cout << "Print inversion matrix of A:" << endl;
     PrintMatrix(d, d, A);
@@ -167,7 +167,7 @@ inline void
 GetPartb(float *X, float *y, int n, int d, float *b)
 {
     cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-                d, 1, n, 1 / (float)n, X, d, y, 1, 0, b, 1);
+                d, 1, n, 1, X, d, y, 1, 0, b, 1);
 }
 
 inline void
@@ -203,6 +203,20 @@ inline bool SaveModel(std::string &filename, float *weight, int d)
     fout.close();
     return true;
 }
+
+inline bool SaveModel(std::string &filename, vector<float> weight, int d)
+{
+    std::ofstream fout(filename.c_str());
+    fout << d << std::endl;
+    for (int i = 0; i < d; ++i)
+    {
+        fout << weight[i] << ' ';
+    }
+    fout << std::endl;
+    fout.close();
+    return true;
+}
+
 } // namespace rr
 
 #endif

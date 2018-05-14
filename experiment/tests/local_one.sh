@@ -1,15 +1,16 @@
 #!/bin/bash
 # set -x
-if [ $# -lt 5 ]; then
-    echo "usage: $0 num_servers num_workers file_name rr/krr mean/mdd"
+if [ $# -lt 7 ]; then
+    echo "usage: $0 lambda gamma num_servers num_workers file_name rr/krr mean/mdd"
     exit -1;
 fi
-start_tm=`date +%s%N`;
 
-export MAX_ITERATION=50
+export MAX_ITERATION=20
 export ZETA=0.000001
-export LAMBDA=0.01
-export GAMMA=0.01
+export LAMBDA=$1
+shift
+export GAMMA=$1
+shift
 export SIGMA=2
 
 export DMLC_NUM_SERVER=$1
@@ -36,7 +37,7 @@ shift
 
 method=$1
 if [ "$method" == "mean" ];then 
-export ZETA=10000
+export ZETA=1000000000000
 fi
 
 export DMLC_LOCAL=1
@@ -59,6 +60,9 @@ for ((i=0; i<${DMLC_NUM_WORKER}; ++i)); do
     export HEAPPROFILE=./W${i}
     ${bin} $i > log/${file_name}/${kind}_${method}_worker${i}.log &
 done
+
+# when finish starting nodes, starting count time
+start_tm=`date +%s%N`;
 
 wait
 

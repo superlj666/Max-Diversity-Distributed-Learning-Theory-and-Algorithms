@@ -206,7 +206,6 @@ void RunWorker(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-  clock_t tic = clock();
   // start system
   Start(0);
   // setup server nodes
@@ -215,7 +214,6 @@ int main(int argc, char *argv[])
   RunWorker(argc, argv);
   // stop system
   Finalize(0, true);
-  clock_t toc = clock();
-  std::cout << "Use time: " << (double)(toc-tic)/CLOCKS_PER_SEC << "second" << std::endl;
+
   return 0;
 }
