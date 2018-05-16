@@ -34,7 +34,7 @@ using namespace std;
 /* Consider adjusting LOOP_COUNT based on the performance of your computer */
 /* to make sure that total run time is at least 1 second */
 #define LOOP_COUNT 10
-
+static int train_size_ = rr::ToInt(ps::Environment::Get()->find("TRAIN_SAMPLE_SIZE"));
 int main(int argc, char *argv[])
 {
      clock_t tic = clock();
@@ -204,32 +204,34 @@ int main(int argc, char *argv[])
     // rr::HDGaussianKernel(left_file, right_file, left_size, right_size, feature_size, kernel, sigma);
     // rr::SaveModel(save_path.c_str(), kernel, left_size, right_size);
 
-    string left_file = "/home/bd-dev/lijian/201804_NIPS/experiment/data/abalone/train_00";
-    string right_file = "/home/bd-dev/lijian/201804_NIPS/experiment/data/abalone/train_01";
-    int left_size = 557;
-    int right_size = 557;
-    int feature_size = 8;
-    float sigma = 2;
-    string save_path = "result/abalone_train_00-train_01";
+    // string left_file = "/home/bd-dev/lijian/201804_NIPS/experiment/data/abalone/train_00";
+    // string right_file = "/home/bd-dev/lijian/201804_NIPS/experiment/data/abalone/train_01";
+    // int left_size = 557;
+    // int right_size = 557;
+    // int feature_size = 8;
+    // float sigma = 2;
+    // string save_path = "result/abalone_train_00-train_01";
 
 
-    // The kernel matrix must less than 2G
-    float *kernel = new float[left_size * right_size]();    
-    if (left_size * feature_size <= 512 * 1024 * 1024 && right_size * feature_size <= 512 * 1024 * 1024)
-    {
-        rr::Dataset left(left_size, feature_size);
-        rr::Dataset right(right_size, feature_size);
-        rr::LoadData(left_file, left);
-        rr::LoadData(right_file, right);
+    // // The kernel matrix must less than 2G
+    // float *kernel = new float[left_size * right_size]();    
+    // if (left_size * feature_size <= 512 * 1024 * 1024 && right_size * feature_size <= 512 * 1024 * 1024)
+    // {
+    //     rr::Dataset left(left_size, feature_size);
+    //     rr::Dataset right(right_size, feature_size);
+    //     rr::LoadData(left_file, left);
+    //     rr::LoadData(right_file, right);
 
-        rr::GaussianKernel(left, right, kernel, sigma);
-    } // High demensional problem
-    else
-    {
-        rr::HDGaussianKernel(left_file, right_file, left_size, right_size, feature_size, kernel, sigma);
-    }
+    //     rr::GaussianKernel(left, right, kernel, sigma);
+    // } // High demensional problem
+    // else
+    // {
+    //     rr::HDGaussianKernel(left_file, right_file, left_size, right_size, feature_size, kernel, sigma);
+    // }
 
-    rr::SaveModel(save_path.c_str(), kernel, left_size, right_size);
+    // rr::SaveModel(save_path.c_str(), kernel, left_size, right_size);
+
+    cout << train_size_ << endl;
 
     clock_t toc = clock();
     cout << "cost :" << (double)(toc - tic) / CLOCKS_PER_SEC << "second" << std::endl;

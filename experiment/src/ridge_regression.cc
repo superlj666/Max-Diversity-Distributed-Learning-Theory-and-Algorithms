@@ -16,6 +16,7 @@ RidgeRegression::RidgeRegression(Dataset &dataset, float lambda, float gamma)
   b_ = new float[dataset.d]();
   wR_ = new float[dataset.d]();
   w_ = new float[dataset.d]();
+  A_ = new float[dataset.d * dataset.d]();
   GetW0();
 }
 
@@ -34,50 +35,56 @@ bool RidgeRegression::GetW0()
   int n = dataset_.n;
   int d = dataset_.d;
 
-  float *A = new float[d * d]();
-  if (A == NULL)
+  GetPartA(X, n, d, lambda_, A_);
+
+  if (!MatrixInversion(A_, d))
   {
-    delete A;
-    return false;
-  }
-  GetPartA(X, n, d, lambda_, A);
-  if (!MatrixInversion(A, d))
-  {
-    delete A;
     return false;
   }
 
   GetPartb(X, y, n, d, b_);
 
   cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-              d, 1, d, 1, A, d, b_, 1, 0, w0_, 1);
+              d, 1, d, 1, A_, d, b_, 1, 0, w0_, 1);
 
-  // cout << "Print inversion matrix of A:" << endl;
-  // PrintMatrix(d, d, A);
+  cout << "Print inversion matrix of A_:" << endl;
+  PrintMatrix(d, d, A_);
 
-  // cout << "Print vector of b:" << endl;
-  // PrintMatrix(d, 1, b_);
+  cout << "Print vector of b:" << endl;
+  PrintMatrix(d, 1, b_);
 
-  // cout << "Print vector of w0:" << endl;
-  // PrintMatrix(d, 1, w0_);
+  cout << "Print vector of w0:" << endl;
+  PrintMatrix(d, 1, w0_);
 
-  delete A;
   return true;
 }
 
 float *RidgeRegression::Getw()
 {
-  float tmp_const = 0;
+  // float tmp_const = 0;
+  // for (int i = 0; i < dataset_.d; ++i)
+  // {
+  //   tmp_const += wR_[i] * w0_[i];
+  // }
+  // for (int i = 0; i < dataset_.d; ++i)
+  // {
+  //   w_[i] = w0_[i] - gamma_ * tmp_const / (b_[i] + 0.000000001);
+  // }
+
   for (int i = 0; i < dataset_.d; ++i)
   {
-    tmp_const += wR_[i] * w0_[i];
+    w_[i] = w0_[i];
   }
-  for (int i = 0; i < dataset_.d; ++i)
-  {
-    w_[i] = w0_[i] - gamma_ * tmp_const / b_[i];
-  }
-  // cout << "Print vector of w:" << endl;
-  // PrintMatrix(dataset_.d, 1, w_);
+  cout << "Print matrix of invA to set w:" << endl;
+  PrintMatrix(dataset_.d, dataset_.d, A_);
+
+  cout << "Print vector of w0:" << endl;
+  PrintMatrix(dataset_.d, 1, w_);
+  cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+              dataset_.d, 1, dataset_.d, -gamma_, A_, dataset_.d, wR_, 1, 1, w_, 1);
+
+  cout << "Print vector of set w:" << endl;
+  PrintMatrix(dataset_.d, 1, w_);
   return w_;
 }
 } // namespace rr

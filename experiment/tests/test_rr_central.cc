@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
     int train_size = rr::ToInt(argv[4]);
     int test_size = rr::ToInt(argv[5]);
     int feature_size = rr::ToInt(argv[6]);
+    float lambda = rr::ToFloat(argv[7]);
 
     rr::Dataset train(train_size, feature_size);
     rr::LoadData(train_path, train);
@@ -53,17 +54,17 @@ int main(int argc, char *argv[])
     rr::LoadData(test_path, test);
 
     // 计算inv(A),b
-    rr::RidgeRegression regression(train, 0.02, 0.01);
+    rr::RidgeRegression regression(train, lambda, 0);
 
     // 计算w并保存
     float *central_w = regression.Getw();
-    string str = "result/" + file_name + "_krr_central_w";
+    string str = "result/" + file_name + "_rr_central_w";
     rr::SaveModel(str.c_str(), central_w, train_size, 1);
 
     // 预测label并保存、计算MSE
     float *predict = new float[test.n]();
     rr::Predict(test, central_w, predict);
-    str = "result/" + file_name + "_krr_central_predict";
+    str = "result/" + file_name + "_rr_central_predict";
     rr::SaveModel(str.c_str(), predict, test_size, 1);
     float mse = rr::MSE(test, predict);
 

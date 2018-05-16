@@ -39,7 +39,6 @@ bool KernelRidgeRegression::GetW0()
     K[i * n + i] += lambda_ ;
   }
 
-
   // Inversion of Part A
   if (!MatrixInversion(K, n))
   {

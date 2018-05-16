@@ -290,6 +290,7 @@ inline void GaussianKernel(Dataset &data, float *kernel, float sigma)
             kernel[i * n + j] = exp((kernel[i * n + j] - norms[i] - norms[j]) / (2 * pow(sigma, 2)));
         }
     }
+
     delete norms;
 }
 
@@ -389,10 +390,14 @@ inline void HDGaussianKernel(string path_left, string path_right, int left_size,
 
 inline void Predict(Dataset &test, float *weight, float *predict)
 {
+    cout << test.d << " " << test.n << endl;
+    cout << "weight: " << endl;
+    rr::PrintMatrix(1, test.d, weight);
+
     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                 test.n, 1, test.d, 1, test.feature, test.d, weight, 1, 0, predict, 1);
-    // cout << "Print vector of predict:" << endl;
-    // PrintMatrix(test.n, 1, result);
+    cout << "Print vector of predict:" << endl;
+    PrintMatrix(test.n, 1, predict);
 }
 
 inline void KernelPredict(KernelData &pre_kernel, float *weight, float *predict)

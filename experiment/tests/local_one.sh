@@ -1,7 +1,7 @@
 #!/bin/bash
 # set -x
-if [ $# -lt 7 ]; then
-    echo "usage: $0 lambda gamma num_servers num_workers file_name rr/krr mean/mdd"
+if [ $# -lt 8 ]; then
+    echo "usage: $0 lambda gamma num_servers num_workers file_name feature_size rr/krr mean/mdd "
     exit -1;
 fi
 
@@ -19,9 +19,10 @@ export DMLC_NUM_WORKER=$1
 shift
 
 file_name=$1
-export DATA_PATH=$(pwd)/data/$1/
-export KERNEL_PATH=$(pwd)/data/kernel/$1/
-export FEATURE_SIZE=$[$(head -1 ${DATA_PATH}train_00 | awk  '{print NF}')-1]
+export DATA_PATH=$(pwd)/data/test1/$1/
+export KERNEL_PATH=$(pwd)/data/test1/kernel/$1/
+shift
+export FEATURE_SIZE=$1
 export TRAIN_SAMPLE_SIZE=$(cat ${DATA_PATH}train_00 | wc -l)
 export TEST_SAMPLE_SIZE=$(cat ${DATA_PATH}test_00 | wc -l)
 
@@ -46,6 +47,10 @@ export DMLC_PS_ROOT_URI='127.0.0.1'
 export DMLC_PS_ROOT_PORT=8000
 export DMLC_ROLE='scheduler'
 ${bin} &
+
+if [ ! -d log/${file_name} ];then
+mkdir log/${file_name}
+fi
 
 # start servers
 export DMLC_ROLE='server'

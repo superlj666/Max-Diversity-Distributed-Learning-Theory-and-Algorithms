@@ -56,26 +56,24 @@ bool DistKRR::GetW0()
 
 float *DistKRR::Getw()
 {
-  float tmp_const = 0;
-  for (int i = 0; i < selfKernel_.row_size; ++i)
+  // float tmp_const = 0;
+  // for (int i = 0; i < selfKernel_.row_size; ++i)
+  // {
+  //   tmp_const += wR_[i] * w0_[i];
+  // }
+  // for (int i = 0; i < selfKernel_.row_size; ++i)
+  // {
+  //   w_[i] = w0_[i] - gamma_ * tmp_const / (y_[i]+0.000000001);
+  // }
+
+  int n = selfKernel_.row_size;
+  for (int i = 0; i < n; ++i)
   {
-    tmp_const += wR_[i] * w0_[i];
-  }
-  for (int i = 0; i < selfKernel_.row_size; ++i)
-  {
-    w_[i] = w0_[i] - gamma_ * tmp_const / y_[i];
+    w_[i] = w0_[i];
   }
 
-  cout << "tmp_const: " << tmp_const <<endl;
-
-  cout << "w_:" << endl;
-  PrintMatrix(1, selfKernel_.row_size, w_);
-
-  cout << "y:" << endl;
-  PrintMatrix(1, selfKernel_.row_size, y_);
-
-  cout << "wR_:" << endl;
-  PrintMatrix(1, selfKernel_.row_size, wR_);
+  cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+              n, 1, n, -gamma_, selfKernel_.kernel, n, wR_, 1, 1, w_, 1);
 
   return w_;
 }

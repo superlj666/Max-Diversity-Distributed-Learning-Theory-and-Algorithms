@@ -45,6 +45,8 @@ int main(int argc, char *argv[])
     int train_size = rr::ToInt(argv[4]);
     int test_size = rr::ToInt(argv[5]);
     int feature_size = rr::ToInt(argv[6]);
+    float lambda = rr::ToFloat(argv[7]);
+    
 
     rr::Dataset train(train_size, feature_size);
     rr::LoadData(train_path, train);
@@ -52,7 +54,7 @@ int main(int argc, char *argv[])
     rr::LoadData(test_path, test);
 
     // 计算inv(A),b
-    rr::KernelRidgeRegression kRegression(train, 0.01, 0.01, 2);
+    rr::KernelRidgeRegression kRegression(train, lambda, 0 , 2);
 
     // 计算w并保存
     float *central_w = kRegression.Getw();

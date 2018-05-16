@@ -16,7 +16,7 @@ template <typename Val>
 class KVDCServer
 {
 public:
-  KVDCServer(int argc, char *argv[])
+  KVDCServer(float *all_weight, float *mean_predict)
   {
     cout << "start server..." << endl;
 
@@ -29,20 +29,20 @@ public:
     finished_ = false;
     total_size = workers_ * train_size_;
 
-    mean_predict = new float[rr::ToInt(ps::Environment::Get()->find("TEST_SAMPLE_SIZE"))]();
-    all_weight_ = new float[total_size]();
-
-    cout << "start round " << round_ << endl;
+    mean_predict_ = mean_predict;
+    all_weight_ = all_weight;
 
     using namespace placeholders;
     ps_server_->set_request_handle(
         bind(&KVDCServer::ReqHandle, this, _1, _2, _3));
+
+    cout << "start round " << round_ << endl;
   }
 
   ~KVDCServer()
   {
-    delete mean_predict;
     delete all_weight_;
+    delete mean_predict_;
     if (ps_server_)
     {
       delete ps_server_;
@@ -82,7 +82,7 @@ private:
         cout << "Predict size: " << req_data.vals.size() << endl;
         for (int i = 0; i < req_data.vals.size(); ++i)
         {
-          mean_predict[i] += req_data.vals[i] / workers_;
+          mean_predict_[i] += req_data.vals[i] / workers_;
         }
 
         if (req_metas_.size() == (int)NumWorkers())
@@ -91,7 +91,7 @@ private:
           string predict_save = "result/";
           predict_save += to_string(clock());
           cout << predict_save << endl;
-          if (rr::SaveModel(predict_save.c_str(), mean_predict, req_data.vals.size(), 1))
+          if (rr::SaveModel(predict_save.c_str(), mean_predict_, req_data.vals.size(), 1))
           {
             cout << "Save predict successly in " << predict_save << endl;
           }
@@ -107,7 +107,7 @@ private:
           rr::Dataset test_data(n_test, d);
           rr::LoadData(test_file_path, test_data);
 
-          float mse = rr::MSE(test_data, mean_predict);
+          float mse = rr::MSE(test_data, mean_predict_);
           cout << "MSE :" << mse << endl;
           for (auto &req : req_metas_)
           {
@@ -126,10 +126,8 @@ private:
         {
           int index = id_file_rank_[req_meta.sender] * train_size_ + i;
           var_ += pow(all_weight_[index] - req_data.vals[i], 2);
-          cout << var_ << " ";
           all_weight_[index] = req_data.vals[i];
         }
-        cout << endl;
 
         cout << req_metas_.size() << " " << NumWorkers() << endl;
         // Wait all push to Update wr and response
@@ -143,7 +141,6 @@ private:
             finished_ = true;
           }
 
-          cout << endl;
           round_++;
           cout << "start round " << round_ << endl;
 
@@ -153,8 +150,6 @@ private:
             server->Response(req);
           }
           var_ = 0;
-
-          cout << endl;
           req_metas_.clear();
         }
       }
@@ -173,11 +168,13 @@ private:
           res_data.vals[i] = all_weight_[i];
         }
       }
-      
+
       server->Response(req_meta, res_data);
 
       cout << "response pull...." << endl;
     }
+
+    cout << endl;
   }
 
   KVServer<float> *ps_server_;
@@ -191,7 +188,7 @@ private:
   vector<KVMeta> req_metas_;
   unordered_map<int, int> id_file_rank_;
   float *all_weight_;
-  float *mean_predict;
+  float *mean_predict_;
   int total_size;
 };
 
@@ -199,7 +196,15 @@ void StartServer(int argc, char *argv[])
 {
   if (!IsServer())
     return;
-  auto server = new KVDCServer<float>(argc, argv);
+
+  int train_size_ = rr::ToInt(ps::Environment::Get()->find("TRAIN_SAMPLE_SIZE"));
+  int workers_ = rr::ToInt(ps::Environment::Get()->find("DMLC_NUM_WORKER"));
+  int total_size = workers_ * train_size_;
+
+  float *mean_predict = new float[rr::ToInt(ps::Environment::Get()->find("TEST_SAMPLE_SIZE"))]();
+  float *all_weight = new float[total_size]();
+
+  auto server = new KVDCServer<float>(all_weight, mean_predict);
   RegisterExitCallback([server]() { delete server; });
 }
 
@@ -269,12 +274,12 @@ void RunWorker(int argc, char *argv[])
   // 4. Computing w0 and push
   rr::DistKRR distKRR(selfKernel, train_data.label, lambda, gamma);
 
-  keys.resize(n, 0);
-  vals.resize(n, 0);
   while (true)
   {
     float *current_w = distKRR.Getw();
 
+    keys.resize(n, 0);
+    vals.resize(n, 0);
     for (int i = 0; i < n; ++i)
     {
       keys[i] = i;
@@ -286,6 +291,7 @@ void RunWorker(int argc, char *argv[])
     kv.Wait(kv.Push(keys, vals));
 
     // 6. Pull and Receiving all weight
+    keys.resize(all_size, 0);
     vals.resize(all_size, 0);
     cout << keys.size() << " " << vals.size() << endl;
     kv.Wait(kv.Pull(keys, &vals));
@@ -313,6 +319,7 @@ void RunWorker(int argc, char *argv[])
 
       cout << self_test_kernel_path << endl;
       rr::KernelData selfTestKernel(self_test_kernel_path, n, n_test);
+      // rr::PrintMatrix(n, n_test, selfTestKernel.kernel);
 
       rr::KernelPredict(selfTestKernel, current_w, predict);
       cout << test_data.n << endl;
@@ -321,7 +328,7 @@ void RunWorker(int argc, char *argv[])
       rr::SaveModel(save_path.c_str(), predict, test_data.n, 1);
 
       keys.resize(n_test, 0);
-      vals.resize(n_test);
+      vals.resize(n_test, 0);
       for (int i = 0; i < n_test; ++i)
       {
         vals[i] = predict[i];
@@ -338,6 +345,8 @@ void RunWorker(int argc, char *argv[])
     float *wR_ = new float[n]();
     float *other_w = new float[n]();
     float *predict = new float[test_data.n]();
+
+    cout << "workers" << workers -1 << endl;
 
     for (int i = 0; i < workers; ++i)
     {
@@ -357,7 +366,9 @@ void RunWorker(int argc, char *argv[])
         cout << cross_kernel_path << endl;
         rr::KernelData selfTestKernel(cross_kernel_path, n, n);
         rr::KernelPredict(selfTestKernel, other_w, predict);
-
+        
+        cout << "weight from worker " << i << endl;
+        rr::PrintMatrix(1, n, other_w);
         for (int j = 0; j < n; ++j)
         {
           wR_[j] += predict[j] / (float)(workers - 1);
