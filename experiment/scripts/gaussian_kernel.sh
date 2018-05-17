@@ -15,7 +15,7 @@ fi
 
 for element1 in $(ls ${file_path});do
     for element2 in $(ls ${file_path});do
-        if [ $element1 == "test_00" ];then
+        if [ $element1 == "test_0000" ];then
             continue
         fi
         left_file=${file_path}/${element1} 

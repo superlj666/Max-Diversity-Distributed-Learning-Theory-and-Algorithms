@@ -102,7 +102,7 @@ private:
           int n_test = rr::ToInt(ps::Environment::Get()->find("TEST_SAMPLE_SIZE"));
           int d = rr::ToInt(ps::Environment::Get()->find("FEATURE_SIZE"));
           string test_file_path(ps::Environment::Get()->find("DATA_PATH"));
-          test_file_path += "test_00";
+          test_file_path += "test_0000";
           cout << "test_file_path: " << test_file_path << endl;
           rr::Dataset test_data(n_test, d);
           rr::LoadData(test_file_path, test_data);
@@ -234,15 +234,7 @@ void RunWorker(int argc, char *argv[])
 
   // 1. Loading Training Data (mainly for labels)
   file_path += "train_";
-  if (file_id > 9)
-  {
-    file_path += argv[1];
-  }
-  else
-  {
-    file_path += "0";
-    file_path += argv[1];
-  }
+  file_path += rr::ID2string(file_id);
   cout << "file_path: " << file_path << endl;
   rr::Dataset train_data(n, d);
   rr::LoadData(file_path, train_data);
@@ -250,22 +242,14 @@ void RunWorker(int argc, char *argv[])
   // 2. Loading Testing Data (mainly for size)
   int n_test = rr::ToInt(ps::Environment::Get()->find("TEST_SAMPLE_SIZE"));
   string test_file_path(ps::Environment::Get()->find("DATA_PATH"));
-  test_file_path += "test_00";
+  test_file_path += "test_0000";
   cout << "test_file_path: " << test_file_path << endl;
   rr::Dataset test_data(n_test, d);
   rr::LoadData(test_file_path, test_data);
 
   // 3 Loading Self Train Kernel
   string self_kernel_name = "train_";
-  if (file_id > 9)
-  {
-    self_kernel_name += argv[1];
-  }
-  else
-  {
-    self_kernel_name += "0";
-    self_kernel_name += argv[1];
-  }
+  file_path += rr::ID2string(file_id);
   self_kernel_name = self_kernel_name + "-" + self_kernel_name;
   string self_kernel_path = ps::Environment::Get()->find("KERNEL_PATH") + self_kernel_name;
   cout << self_kernel_path << endl;
@@ -315,7 +299,7 @@ void RunWorker(int argc, char *argv[])
       string self_test_kernel_path = ps::Environment::Get()->find("KERNEL_PATH");
       self_test_kernel_path += "train_";
       self_test_kernel_path += rr::ID2string(file_id);
-      self_test_kernel_path += "-test_00";
+      self_test_kernel_path += "-test_0000";
 
       cout << self_test_kernel_path << endl;
       rr::KernelData selfTestKernel(self_test_kernel_path, n, n_test);
@@ -344,7 +328,7 @@ void RunWorker(int argc, char *argv[])
     cout << "Update w------>" << endl;
     float *wR_ = new float[n]();
     float *other_w = new float[n]();
-    float *predict = new float[test_data.n]();
+    float *predict = new float[n]();
 
     cout << "workers" << workers -1 << endl;
 

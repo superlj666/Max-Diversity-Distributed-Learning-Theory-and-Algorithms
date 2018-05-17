@@ -459,13 +459,23 @@ inline float MSE(Dataset &test, float *predict)
 inline string ID2string(int id)
 {
     string name;
-    if (id > 9)
+    if (id > 999)
     {
+        name += to_string(id);
+    }
+    else if (id > 99)
+    {
+        name += "0";
+        name += to_string(id);
+    }
+    else if (id > 9)
+    {
+        name += "00";
         name += to_string(id);
     }
     else
     {
-        name += "0";
+        name += "000";
         name += to_string(id);
     }
     return name;

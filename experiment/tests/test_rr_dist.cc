@@ -21,7 +21,7 @@ public:
     zeta_ = rr::ToFloat(ps::Environment::Get()->find("ZETA"));
 
     file_path_ += ps::Environment::Get()->find("DATA_PATH");
-    file_path_ += "test_00";
+    file_path_ += "test_0000";
     cout << "test_file: " << file_path_ << endl;
 
     test_sample_size_ = rr::ToInt(ps::Environment::Get()->find("TEST_SAMPLE_SIZE"));
@@ -191,16 +191,10 @@ void RunWorker(int argc, char *argv[])
 
   string file_path(ps::Environment::Get()->find("DATA_PATH"));
   file_path += "train_";
-  if (rr::ToInt(argv[1]) > 9)
-  {
-    file_path += argv[1];
-  }
-  else
-  {
-    file_path += "0";
-    file_path += argv[1];
-  }
+  file_path += rr::ID2string(rr::ToInt(argv[1]));
   cout << "file_path: " << file_path << endl;
+  cout << "n: " << n << endl;
+  cout << "d: " << d << endl;
 
   rr::Dataset dataset_(n, d);
   rr::LoadData(file_path, dataset_);
@@ -210,6 +204,7 @@ void RunWorker(int argc, char *argv[])
   // 计算inv(A),b,c0
   rr::RidgeRegression rr(dataset_, lambda, gamma);
 
+  cout << "finish loading" << endl;
   // push
   for (int j = 0; j < rr::ToInt(ps::Environment::Get()->find("MAX_ITERATION")) && !vals.empty(); ++j)
   {

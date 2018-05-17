@@ -23,8 +23,8 @@ export DATA_PATH=$(pwd)/data/test1/$1/
 export KERNEL_PATH=$(pwd)/data/test1/kernel/$1/
 shift
 export FEATURE_SIZE=$1
-export TRAIN_SAMPLE_SIZE=$(cat ${DATA_PATH}train_00 | wc -l)
-export TEST_SAMPLE_SIZE=$(cat ${DATA_PATH}test_00 | wc -l)
+export TRAIN_SAMPLE_SIZE=$(cat ${DATA_PATH}train_0000 | wc -l)
+export TEST_SAMPLE_SIZE=$(cat ${DATA_PATH}test_0000 | wc -l)
 
 shift
 

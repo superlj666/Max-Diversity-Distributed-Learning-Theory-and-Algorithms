@@ -12,29 +12,30 @@ lambda_krr=$7
 gamma=$8
 
 log_file_rr_central=log/$1_rr_central.log
-rm -rf $log_file_rr_central
 log_file_krr_central=log/$1_krr_central.log
-rm -rf $log_file_krr_central
 log_file_rr_mean=log/$1_rr_mean.log
-rm -rf $log_file_rr_mean
 log_file_rr_mdd=log/$1_rr_mdd.log
-rm -rf $log_file_rr_mdd
 log_file_krr_mean=log/$1_krr_mean.log
-rm -rf $log_file_krr_mean
 log_file_krr_mdd=log/$1_krr_mdd.log
-rm -rf $log_file_krr_mdd
+
+# rm -rf $log_file_krr_mdd
+# rm -rf $log_file_krr_mean
+# rm -rf $log_file_rr_mdd
+# rm -rf $log_file_rr_mean
+# rm -rf $log_file_krr_central
+# rm -rf $log_file_rr_central
 
 for((i=1;i<=$folds;i++));do
     file_name=$1"${i}"
     train_path=($(pwd)/data/test1/${file_name}_train)
-    test_path=($(pwd)/data/test1/${file_name}/test_00)
+    test_path=($(pwd)/data/test1/${file_name}/test_0000)
     train_size=$(cat ${train_path} | wc -l)
     test_size=$(cat ${test_path} | wc -l)
 
     if [ ! -d log/${file_name} ];then
     mkdir log/${file_name}
     fi
-    
+
     # rr central
     start_tm=`date +%s%N`
     tests/test_rr_central ${file_name} ${train_path} ${test_path} ${train_size} ${test_size} ${feature_size} $lambda_rr > log/${file_name}/rr_central.log
