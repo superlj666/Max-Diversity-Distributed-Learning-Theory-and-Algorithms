@@ -108,7 +108,7 @@ private:
           rr::LoadData(test_file_path, test_data);
 
           float mse = rr::MSE(test_data, mean_predict_);
-          cout << "MSE :" << mse << endl;
+          cout << mse << endl;
           for (auto &req : req_metas_)
           {
             server->Response(req);

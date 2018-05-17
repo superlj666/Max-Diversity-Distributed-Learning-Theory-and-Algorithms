@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     rr::SaveModel(str.c_str(), predict, test_size, 1);
     float mse = rr::MSE(test, predict);
 
-    cout << file_name << " RR central MSE :" << mse << endl;
+    cout << mse << endl;
 
     return 0;
 }

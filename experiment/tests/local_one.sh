@@ -73,8 +73,11 @@ wait
 
 end_tm=`date +%s%N`;
 use_tm=`echo $end_tm $start_tm | awk '{ print ($1 - $2) / 1000000000}'`
-echo $(tail -1 log/${file_name}/${kind}_${method}_server0.log)
-echo "Cost time:" $use_tm
+MSE=$(tail -1 log/${file_name}/${kind}_${method}_server0.log)
+echo -n $MSE 
+echo -n " " 
+printf "%.6f" $use_tm 
+echo 
 # scheduler tests/run.sh scheduler 1 2 0 abalone tests/test_dist_rr_dc
 # server tests/run.sh server 1 2 0 abalone tests/test_dist_rr_dc
 # worker0 tests/run.sh worker 1 2 0 abalone tests/test_dist_rr_dc

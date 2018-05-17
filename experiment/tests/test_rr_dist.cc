@@ -52,7 +52,7 @@ public:
     rr::Predict(test_data, weight_old, predict);
     rr::PrintMatrix(test_data.n, 1, predict);
     float mse = rr::MSE(test_data, predict);
-    cout << "MSE :" << mse << endl;
+    cout << mse << endl;
 
     return mse;
   }
