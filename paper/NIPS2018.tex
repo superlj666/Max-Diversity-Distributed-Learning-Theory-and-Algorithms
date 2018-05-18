@@ -534,25 +534,26 @@ Thus, to obtain tighter bound, the discrepancy of each local estimate $\hat{f}_i
     \label{alg:RMMls}
     \begin{algorithmic}[1]
     \STATE \textbf{Input}: $\lambda,\gamma$, $\mathbf X$, $m$, $\zeta$.
-     \STATE For each branch node $i$: $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$, and push $\hat{\mathbf w}_i^0$ to the center node;\\
+     \STATE \emph{For each worker node $i$:} $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$, and push $\hat{\mathbf w}_i^0$ to the server node.\\
          ~~~~~~~~// $\mathbf A_i=\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf X_{\mathcal{S}_i}^\mathrm{T}+
-            \lambda \mathbf I_d$, $\mathbf b_i= \frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf y_{\mathcal{S}_i}$
+            \lambda \mathbf I_d$, $\mathbf b_i= \frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf y_{\mathcal{S}_i}$.
            % ~~~~~~~~// for RKHS $\mathbf A_i=\frac{1}{n}\mathbf K_{\mathcal{S}_i}+
 %            \lambda \mathbf I_n-\gamma \mathbf I_n$, $\mathbf b_i= \frac{1}{n}\mathbf y_{\mathcal{S}_i}$
-    \STATE Center node: $\bar{\mathbf w}^0=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf w}_i^0$ and
-    push $\bar{\mathbf w}^{0}_{\backslash i}=\frac{m\bar{\mathbf w}^{0}-\hat{\mathbf w}_i^0}{m-1}$ to each branch node $i$;
+    \STATE \emph{For server node:}
+    $\bar{\mathbf w}^0=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf w}_i^0$,
+    $\bar{\mathbf w}^{0}_{\backslash i}=\frac{m\bar{\mathbf w}^{0}-\hat{\mathbf w}_i^0}{m-1}$.
     \FOR{$t=1,2,\ldots$}
-    \STATE  For each branch node $i$:
-    \STATE ~~~~$\mathbf d_i^t=\left(\left(\bar{\mathbf w}^{t-1}_{\backslash i}\right)^\mathrm{T}\hat{\mathbf w}_i^{0}\right)./\mathbf b_i$,
-     $\hat{\mathbf w}_i^t=\hat{\mathbf w}_i^0-\gamma\mathbf d_i^t$;
-    \STATE ~~~~push $\hat{\mathbf w}_i^t$ to the center node;
-     \STATE Center node:
+    \STATE  \emph{For each worker node $i$:} \\
+    ~~~~Pull $\bar{\mathbf w}^{t-1}_{\backslash i}$ from server node.
+    \STATE ~~~~$\mathbf d_i^t=\left(\left(\bar{\mathbf w}^{t-1}_{\backslash i}\right)^\mathrm{T}\hat{\mathbf w}_i^{0}\right)./\mathbf b_i$.
+     ~~~~$\hat{\mathbf w}_i^t=\hat{\mathbf w}_i^0-\gamma\mathbf d_i^t$.
+    \STATE ~~~~Push $\hat{\mathbf w}_i^t$ to the server node.
+     \STATE \emph{For server node:}
      \STATE ~~~~$\bar{\mathbf w}^t=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf w}_i^t$\\
       ~~~~\textbf{if} {$\|\bar{\mathbf w}^{t}-\bar{\mathbf w}^{t-1}\|\leq \zeta$} \textbf{end for}
-      \STATE \textbf{else}
-      \STATE ~~~~push $\bar{\mathbf w}^{t}_{\backslash i}=\frac{m\bar{\mathbf w}^{t}-\hat{\mathbf w}_i^t}{m-1}$ to each branch node $i$
+      \STATE ~~~~\textbf{else} $\bar{\mathbf w}^{t}_{\backslash i}=\frac{m\bar{\mathbf w}^{t}-\hat{\mathbf w}_i^t}{m-1}$.
     \ENDFOR
-    \STATE \textbf{Output}: $\bar{\mathbf w}=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf w}_i^t$
+    \STATE \textbf{Output}: $\bar{\mathbf w}=\frac{1}{m}\sum_{i=1}^m\hat{\mathbf w}_i^t$.
     \end{algorithmic}
 \end{algorithm}
 \subsection{Linear Hypothesis Space}
@@ -564,7 +565,7 @@ we consider the following optimization problem:
   \frac{1}{n}\sum_{z_i\in\mathcal{S}_i}(\mathbf w^\mathrm{T}\mathbf x_i-y_i)^2+\lambda \|\mathbf w\|_2^2+ \gamma \mathbf w^\mathrm{T}\bar{\mathbf w}_{\backslash i},
 \end{align}
 where $\bar{\mathbf w}_{\backslash i}=\frac{1}{m-1}\sum_{j=1,j\not =i}\hat{\mathbf w}_j$.
-Note that, if given $\bar{\mathbf w}_{\backslash i}$,  $\hat{\mathbf w}_i$ can be written as
+Note that, if given $\bar{\mathbf w}_{\backslash i}$,  $\hat{\mathbf w}_i$ has following closed form solution:
 \begin{align*}
   \hat{\mathbf w}_i=\Big(\underbrace{\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf X_{\mathcal{S}_i}^\mathrm{T}+\lambda \mathbf I_d}_{:=\mathbf A_i}\Big)^{-1}
   \Big(\underbrace{\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf y_{\mathcal{S}_i}}_{:=\mathbf b_i}- \frac{\gamma\bar{\mathbf w}_{\backslash i}}{2}\Big),
@@ -572,10 +573,10 @@ Note that, if given $\bar{\mathbf w}_{\backslash i}$,  $\hat{\mathbf w}_i$ can b
 where $\mathbf X_{\mathcal{S}_i}=(\mathbf x_{t_1},\mathbf x_{t_2},\ldots, \mathbf x_{t_n})$,
 $\mathbf y_{\mathcal{S}_i}=(y_{t_1},y_{t_2},\ldots,y_{t_n})^\mathrm{T}$, $z_{t_j}\in \mathcal{S}_i$, $j=1,\ldots, n$.
 In the next, we will give a iterative algorithm to
-solve the optimization problem \eqref{optimation-linear-space},
-but  we should compute $\mathbf A_i^{-1}\bar{\mathbf w}_{\backslash i}$, which needs $\mathcal{O}\left(d^2\right)$
-in each iterative if given $\mathbf A_i^{-1}$,
-which is computationally intensive.
+solve the optimization problem \eqref{optimation-linear-space}.
+In each iteration, we should compute $\mathbf A_i^{-1}\bar{\mathbf w}_{\backslash i}$,
+which needs $\mathcal{O}\left(d^2\right)$ if given $\mathbf A_i^{-1}$,
+which is computational intensive.
 %where $\mathbf A_i=\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf X_{\mathcal{S}_i}^\mathrm{T}+
 %\lambda \mathbf I_d-\gamma \mathbf I_d$.
 Fortunately, %the Lemma 4 (see in Appendix) show that we only need $\mathcal{O}(d)$ to compute $\mathbf A_i^{-1}\bar{\mathbf w}_{\backslash i}$
@@ -590,32 +591,31 @@ where $a./\mathbf c=(a/c_1,\ldots a/c_d)^\mathrm{T}$, which only needs $\mathcal
 
 The Max-Discrepant Distributed Learning  algorithm for linear space is given in Algorithm \ref{alg:RMMls}.
 Compared with the traditional divide-and-conquer method,
-our MDD for linear space only need add $\mathcal{O}(d)$ in each iteration for each local machine.
+our MDD for linear space only need add $\mathcal{O}(d)$ in each iteration for each worker node.
 %We can see that in each iteration, the time complexity is $O()$
 \begin{algorithm}
     \caption{Max-Discrepant Distributed Learning for RKHS (MDD-RKHS)}
     \label{alg:RMMRKHS}
     \begin{algorithmic}[1]
     \STATE \textbf{Input}: $\lambda,\gamma$, kernel function $K$, $\mathbf X$, $m$, $\zeta$.
-     \STATE For each branch node $i$: $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$, and push $\hat{\mathbf w}_i^t$ to the center node;\\
+     \STATE \emph{For each worker node $i$:} $\hat{\mathbf w}_i^0=\mathbf A_i^{-1} \mathbf b_i$, and push $\hat{\mathbf w}_i^t$ to the server node.\\
         % ~~~~~~~~// for linear space $\mathbf A_i=\frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf X_{\mathcal{S}_i}^\mathrm{T}+
 %            \lambda \mathbf I_d-\gamma \mathbf I_d$, $\mathbf b_i= \frac{1}{n}\mathbf X_{\mathcal{S}_i}\mathbf y_{\mathcal{S}_i}$\\
             ~~~~~~~~// $\mathbf A_i=\frac{1}{n}\mathbf K_{\mathcal{S}_i}+
-            \lambda \mathbf I_n$, $\mathbf b_i= \frac{1}{n}\mathbf y_{\mathcal{S}_i}$
-    \STATE Center node: $\hat{\mathbf g}_{i,j}^0=\mathbf K_{\mathcal{S}_i,\mathcal{S}_j}\hat{\mathbf w}_j^0$, $i, j=1,\ldots,m$,
-     $\bar{\mathbf g}_{i}^0=\frac{1}{m}\sum_{j=1}^m \hat{\mathbf g}_{i,j}^0$
-     and push  $\bar{\mathbf g}^{0}_{\backslash i}=\frac{m\bar{\mathbf g}_i^{0}-\hat{\mathbf g}_i^0}{m-1}$ to each branch node $i$;
+            \lambda \mathbf I_n$, $\mathbf b_i= \frac{1}{n}\mathbf y_{\mathcal{S}_i}$.
+    \STATE \emph{For server node:} $\hat{\mathbf g}_{i,j}^0=\mathbf K_{\mathcal{S}_i,\mathcal{S}_j}\hat{\mathbf w}_j^0$, $i, j=1,\ldots,m$, $\bar{\mathbf g}^{0}_{\backslash i}=\frac{m\bar{\mathbf g}_i^{0}-\hat{\mathbf g}_i^0}{m-1}$.
     \FOR{$t=1,2,\ldots$}
-    \STATE  For each branch node $i$:
+    \STATE  \emph{For each worker node $i$:}
+    \STATE ~~~~Pull $\bar{\mathbf g}^{t-1}_{\backslash i}$ from server node.
     \STATE ~~~~$\mathbf d_i^t=\left(\left(\bar{\mathbf g}^{t-1}_{\backslash i}\right)^\mathrm{T}\hat{\mathbf w}_i^0\right)./\mathbf b_i$,
-     $\hat{\mathbf w}_i^t=\hat{\mathbf w}_i^0-\gamma\mathbf d_i^t$;
-    \STATE ~~~~push $\hat{\mathbf w}_i^t$ to the center node;
-     \STATE Center node:
+     $\hat{\mathbf w}_i^t=\hat{\mathbf w}_i^0-\gamma\mathbf d_i^t$.
+    \STATE ~~~~Push $\hat{\mathbf w}_i^t$ to the server node.
+     \STATE \emph{For server node:}
      \STATE ~~~~$\hat{\mathbf g}_{i,j}^{t}=\mathbf K_{\mathcal{S}_i,\mathcal{S}_j}\hat{\mathbf w}_j^t$, $i, j=1,\ldots,m$,
-     $\bar{\mathbf g}_{i}^t=\frac{1}{m}\sum_{j=1}^m \hat{\mathbf g}_{i,j}^t$\\
+     $\bar{\mathbf g}_{i}^t=\frac{1}{m}\sum_{j=1}^m \hat{\mathbf g}_{i,j}^t$.\\
       ~~~~\textbf{if} {$\frac{1}{m}\sum_{i=1}^m\|\bar{\mathbf g}_i^{t}-\bar{\mathbf g}_i^{t}\|\leq \zeta$} \textbf{end for}
-      \STATE \textbf{else}
-      \STATE ~~~~push $\bar{\mathbf g}^{t}_{\backslash i}=\frac{m\bar{\mathbf g}_i^{t}-\hat{\mathbf g}_i^t}{m-1}$ to each branch node $i$ to each branch node $i$
+      \STATE ~~~~\textbf{else}
+      \STATE ~~~~~~~~$\bar{\mathbf g}^{t}_{\backslash i}=\frac{m\bar{\mathbf g}_i^{t}-\hat{\mathbf g}_i^t}{m-1}$.
     \ENDFOR
     \STATE \textbf{Output}: $\bar{f}=\frac{1}{m}\sum_{i=1}^m\hat{f}_i$, where $\hat{f}_i=\mathbf k_{\mathcal{S}_i}^\mathrm{T}\hat{\mathbf w}_i$,
     where $\mathbf k_{\mathcal{S}_i}=(K(\mathbf x_1,\cdot),\ldots,K(\mathbf x_n,\cdot))^\mathrm{T}$, $z_j\in\mathcal{S}_i$
@@ -657,18 +657,23 @@ Compared with the traditional divide-and-conquer method,
 our MDD for RKHS  only need add $\mathcal{O}(n)$ in each iteration for local machine.
 
 \subsection{Complexity}
-\textbf{Linear space}:  for each node, we need $\mathcal{O}\left(nd^2\right)$ to compute the $\mathbf A_i$,  $\mathcal{O}(d^3)$
-to compute $\mathbf A_i^{-1}$,  and $\mathcal{O}(d)$ to compute $\mathbf d_i$ for each iterative.
-Moreover, the communication complexity is $O(d)$ for each iterative.
-So, the total complexity is $\mathcal{O}\left(mnd^2+md^3+Tmd\right)$, where $T$ is the number of iterative.
+\textbf{Linear space}: At the very beginning, we need $\mathcal{O}\left(nd^2\right)$
+to compute the $\mathbf A_i$,  $\mathcal{O}(d^3)$ to compute $\mathbf A_i^{-1}$ for each worker node.
+In each iteration, worker nodes cost $\mathcal{O}(d)$ to compute $\mathbf d^t_i$ and
+the server node costs $O(md)$ to compute $\bar{\mathbf w}^{t}_{\backslash i}$.
+So, the sequential computation complexity is $\mathcal{O}\left(nd^2+d^3+Tmd\right)$, where $T$ is the number of iteration.
+Moreover, the total communication complexity is $O(Td)$.
 
-\textbf{RKHS}: we need $\mathcal{O}\left(n^2d\right)$ to compute the $\mathbf A_i$, $\mathcal{O}(n^3)$
-to compute $\mathbf A_i^{-1}$,  and $\mathcal{O}(n)$ to compute $\mathbf d_i$ for each iterative.
-Moreover, the communication complexity is $O(n)$ for each iterative.
-So, the total complexity is $\mathcal{O}\left(mn^2d+mn^3+Tmn\right)$.
+\textbf{RKHS}: At the very beginning, we need $\mathcal{O}\left(n^2d\right)$ to compute the $\mathbf A_i$
+and $\mathcal{O}(n^3)$ to compute $\mathbf A_i^{-1}$.
+In each iteration, worker nodes cost $\mathcal{O}(n)$ to compute $\mathbf d^t_i$
+and the server node costs $O(mn)$ to compute $\bar{\mathbf g}^{t}_{\backslash i}$.
+So, the sequential computation complexity is $\mathcal{O}\left(n^2d+n^3+Tmn\right)$, where $T$ is the number of iteration.
+Moreover, the total communication complexity is $O(Tn)$.
 
-\textbf{Divide-and-conquer approach}: the complexities of linear space and RKHS
-are $\mathcal{O}\left(mnd^2+md^3\right)$ and $\mathcal{O}\left(mn^2d+mn^3\right)$, respectively.
+\textbf{Divide-and-conquer approach}: The sequential complexities of linear space and RKHS
+are $\mathcal{O}\left(nd^2+d^3\right)$ and $\mathcal{O}\left(n^2d+n^3\right)$, respectively.
+Meanwhile, the communication complexities are $O(d)$ and $O(n)$.
 
 %For the original non-distributed algorithm,
 %the complexities of linear space and RKHS
@@ -676,36 +681,36 @@ are $\mathcal{O}\left(mnd^2+md^3\right)$ and $\mathcal{O}\left(mn^2d+mn^3\right)
 
 \section{Experiments}
 In this section, we will compare our  \texttt{MDD} methods with the global method and divide-and-conquer method in both Linear Hypothesis and RKHS.
-Actually, we compare six methods: global Ridge Regression (\texttt{RR}) \cite{hoerl1970ridge},
+Actually, we compare six approaches: global Ridge Regression (\texttt{RR}) \cite{hoerl1970ridge},
 divide-and-conquer Ridge Regression (\texttt{DRR}) and our \texttt{MDD-LS} (Algorithm \ref{alg:RMMls}) in Linear Hypothesis Space,
 meanwhile, global Kernel Ridge Regression (\texttt{KRR}) \cite{an2007fast},
 divide-and-conquer Kernel Ridge Regression (\texttt{KDRR}) \cite{Zhang2013} and our \texttt{MDD-RKHS} (Algorithm \ref{alg:RMMRKHS}) in Reproducing Kernel Hilbert Space.
 Based on the recent distributed machine learning platform PARAMETER SERVER \cite{li2014scaling},
-we implemented divide-and-conquer methods and \texttt{MDD} methods and do experiments on this platform.
+we implemented divide-and-conquer methods and \texttt{MDD} methods and do experiments on this framework.
 %To evaluated performance of methods, we use 10 public available dataset from LIBSVM
 %Data \footnote{Available at https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/}.
 %%The root Mean Square Error $E=\sqrt{\frac{1}{N}\sum_{i=1}^N{(f(x_i)-y_i)^2}}$ and run time are used as comparison principles.
 
-We experiment on 10 publicly available dataset from LIBSVM data
+We experiment on 10 publicly available datasets from LIBSVM data
 %To evaluated performance of methods, we use 10 public available dataset from LIBSVM
 \footnote{Available at https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/}.
 We run all methods on a computer node with 32 cores (2.40GHz) and 64 GB memory.
-While centralized methods only use a single CPU core, distributed methods use all cores to simulate parallel environment.
+While global methods only use a single CPU core, distributed methods use all cores to simulate parallel environment.
 For RKHS methods, we use the popular Gaussian kernels $K(\mathbf{x}, \mathbf{x}')=\exp(-{\|\mathbf{x}-\mathbf{x}'\|_2^2}/{2\sigma^2})$
-as candidate kernels, and use the best kernel from $\sigma \in \{2^i, i=-10, -9, \dots, 10\}$.
+as candidate kernels, and choose the best kernel from $\sigma \in \{2^i, i=-10, -9, \dots, 10\}$ by 5-folds cross-validation.
 The regularized parameterized $\lambda \in \{10^i, i=-6,-5,\dots,3\}$ in all methods and $\gamma \in \{10^i, i=-6,-5,\dots,3\}$
-in MDD methods are determined by 5-folds cross-validation on training data.
-For each data set,  we run all methods 30 times with random partitions on all data
-sets of non-overlapping 70\% training data and 30\% testing data, training data.
+in \texttt{MDD} methods are determined by 5-folds cross-validation on training data.
+With the same kernel and parameters, for each data set,  we run all methods 30 times with random partitions on all data
+sets of non-overlapping 70\% training data and 30\% testing data.
 
-\subsection{Performance}
-The root mean square error  under fixed $5$ worker node (in the next, we will analyze the performance on the different worker nodes)
-is reported in Table \ref{tabel:mse}, which can be summarized as follows:
+The root mean square error of all methods is reported in Table \ref{tabel:mse}. Meanwhile, we repeat divide-and-conquer methods on different amount of worker nodes, 5 and 10 for simplification. Furthermore, the statistical significance of difference between methods hold the best result and other methods are estimated by 30 times multiple training/testing splits. The result which has no statistical significant difference compared to the best one, is remarked by underline while the best results by bold.
+The table can be summarized as follows:
 1) Global methods outperform the distributed methods on all data sets;
-2) In terms of distributed methods, \texttt{MDD-LS} and \texttt{MDD-RKHS} always give better results than the $\texttt{DRR}$ and $\texttt{DKRR}$.
-3) Kernel methods usually give better results than that of Linear methods.
-4) Some data sets are sensitive to data partition which result in huge gap between global methods and distributed methods,
-such as space\_ga, phishing and cadata, while others are not.
+2) Kernel methods can usually get more optimal results than that of Linear methods;
+3) Some data sets are sensitive to data partition, whose results existing huge gap between global methods and distributed methods,
+such as space\_ga, cpusmall and phishing, while others are not;
+4) The increase of worker nodes causes higher root mean square error.
+5) Our \texttt{MDD-LS} and \texttt{MDD-RKHS} exhibits better prediction accuracy than the $\texttt{DRR}$ and $\texttt{KDRR}$ in all cases, and can be comparable with global methods in some cases. This demonstrates the advantage of \texttt{MDD} methods in generalization performance.
 
 \begin{table*}[t]
 \small
@@ -720,16 +725,21 @@ such as space\_ga, phishing and cadata, while others are not.
    }
    \label{tabel:mse}
     %\centering
-    \begin{tabular*}{\linewidth}{@{\extracolsep{-0.25cm}}lccccccccc}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{-0.10cm}}lccccccccc}
     \toprule
-                                &madelon                    &space\_ga                   &cpusmall              &phishing           &cadata             &a8a                    &a9a                &cod\-rna            &YearPrediction                 \\   \hline
-c-RR                            &0.97121                    &2.58531                     &45.15010              &0.24716            &1.93255            &0.67161                &0.67375            &0.84152             &12.23623 \\
-a-RR                            &1.40855                    &2.81430                     &53.11497              &0.25856            &2.65991            &0.68158                &0.68008            &0.85555             &14.21196 \\
-MDD-LS                          &1.17185                    &2.67725                     &46.18480              &0.25128            &2.11459            &0.67730                &0.67380            &0.84737             &12.30163\\
+                                &madelon                  &space\_ga               &cpusmall            &phishing           &cadata             &a8a                  &a9a                    &cod\-rna                   &YearPred                 \\   \hline
+RR                              &\textbf{0.971}           &\textbf{2.585}          &\textbf{45.150}     &\textbf{0.247}     &\textbf{1.932}     &\textbf{0.671}       &\textbf{0.673}         &\textbf{0.841}             &\textbf{12.233} \\
+DRR-5                           &0.989                    &2.814                   &53.114              &0.262              &2.659              &\underline{0.681}    &\underline{0.680}      &0.855                      &14.216 \\
+DRR-10                          &1.408                    &2.983                   &55.557              &0.273              &2.839              &0.725                &0.696                  &0.863                      &15.780 \\
+MDD-LS-5                        &\underline{0.977}        &2.677                   &46.184              &0.257              &\underline{2.114}  &\underline{0.677}    &\underline{0.673}      &0.847                      &\underline{12.303}\\
+MDD-LS-10                       &1.121                    &2.750                   &48.956              &0.268              &2.352              &0.703                &0.685                  &0.854                      &14.158\\
 \hline \hline
-c-KRR                           &0.95962                    &1.45821                     &53.99303              &0.16789            &1.50400            &0.65961                &1.79011            &0.67154             &/ \\
-a-KRR                           &1.37437                    &2.38965                     &54.22893              &0.41966            &1.59813            &0.87312                &0.86690            &0.67435             &5.39791\\
-MDD-RKHS                        &0.99201                    &2.03008                     &54.01543              &0.21481            &1.55416            &0.74578                &0.86684            &0.67272             &5.35078\\
+KRR                             &\textbf{0.959}           &\textbf{1.458}          &\textbf{53.993}     &\textbf{0.167}     &\textbf{1.504}     &\textbf{0.659}       &\textbf{0.790}         &\textbf{0.671}             &/ \\
+KDRR-5                          &1.142                    &2.389                   &\underline{54.228}  &0.419              &1.598              &0.873                &0.866                  &0.674                      &\underline{5.397}\\
+KDRR-10                         &1.374                    &2.531                   &56.233              &0.422              &1.824              &0.906                &0.893                  &0.687                      &5.631\\
+MDD-RKHS-5                      &\underline{0.992}        &2.030                   &\underline{54.015}  &0.214              &\underline{1.554}  &0.745                &\underline{0.804}      &\underline{0.672}          &\textbf{5.350}\\
+MDD-RKHS-10                     &1.292                    &2.326                   &55.120              &0.239              &1.780              &0.773                &0.849                  &0.683                      &5.534\\
+
    \bottomrule
 \end{tabular*}
 %\vspace{-0.6cm}
@@ -743,21 +753,26 @@ MDD-RKHS                        &0.99201                    &2.03008            
 %\tiny
 %\renewcommand{\captionfont}{\small}
    \caption{
-    \small Comparison of run time of our \texttt{MDD-LS} and \texttt{MDD-RKHS} with other methods.
+    \small Comparison of run time (second) amound our proposed \texttt{MDD-LS} and \texttt{MDD-RKHS} with other methods.
    %We set the numbers of our method (EPSVM) to be bold if our method outperforms all other methods (KTA, CKTA, FSM, 3-CV, 5-CV and 10-CV).
    }
    \label{tabel:time}
     %\centering
-    \begin{tabular*}{\linewidth}{@{\extracolsep{-0.25cm}}lccccccccc}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{-0.10cm}}lccccccccc}
     \toprule
-                                &madelon                    &space\_ga                   &cpusmall              &phishing           &cadata             &a8a                    &a9a                &cod\-rna            &YearPrediction                \\   \hline
-c-RR                            &2.06937                    &0.28045                     &1.21843              &1.52631           &0.49022            &2.54481                &2.95787            &1.86626             &10.4335 \\
-a-RR                            &1.84997                    &0.22423                     &0.46349              &0.62537           &0.36385            &0.77356                &0.88100            &0.73695             &3.70395 \\
-MDD-LS                          &1.87543                    &0.22424                     &0.58739              &0.66477           &0.42771            &1.20873                &1.16711            &0.87666             &5.47417 \\
+                                &madelon                  &space\_ga               &cpusmall            &phishing           &cadata             &a8a                  &a9a                    &cod\-rna                   &YearPred                \\   \hline
+RR                              &2.069                    &0.280                   &1.218               &1.526              &0.490              &2.544                &2.957                  &1.866                      &10.433 \\
+DRR-5                           &1.849                    &0.224                   &0.463               &0.625              &0.363              &0.773                &0.881                  &0.736                      &3.709 \\
+DRR-10                          &1.623                    &0.193                   &0.298               &0.350              &0.214              &0.401                &0.503                  &0.435                      &2.645 \\
+MDD-LS-5                        &1.875                    &0.235                   &0.587               &0.664              &0.427              &1.208                &1.167                  &0.876                      &5.474 \\
+MDD-LS-10                       &1.656                    &0.214                   &0.315               &0.395              &0.269              &0.651                &0.628                  &0.412                      &3.156 \\
 \hline \hline
-c-KRR                           &3.45079                    &1.50828                     &9.80181              &12.0809           &76.9912            &15.3375                &16.1033            &137.605             &/ \\
-a-KRR                           &2.48753                    &0.29568                     &3.37429              &1.45185           &5.52454            &6.02848                &5.91322            &40.2249             &86.7544\\
-MDD-RKHS                        &2.69209                    &0.38149                     &5.63781              &1.90103           &29.8502            &8.62802                &9.45444            &73.0914             &167.208\\
+KRR                             &3.450                    &1.508                   &9.801               &12.08              &76.99              &15.33                &16.103                 &137.6                      &/ \\
+KDRR-5                          &2.487                    &0.295                   &3.374               &1.451              &5.524              &6.021                &5.913                  &40.22                      &86.754\\
+KDRR-10                         &1.653                    &0.183                   &1.863               &0.689              &0.302              &3.670                &3.544                  &23.64                      &46.197\\
+MDD-RKHS-5                      &2.692                    &0.331                   &5.637               &1.901              &29.85              &8.628                &9.454                  &73.09                      &167.208\\
+MDD-RKHS-10                     &1.781                    &0.206                   &3.024               &0.984              &17.78              &4.125                &5.679                  &40.23                      &89.312\\
+
    \bottomrule
 \end{tabular*}
 \vspace{-0.6cm}
@@ -765,30 +780,15 @@ MDD-RKHS                        &2.69209                    &0.38149            
 
 The run time is reported in Table \ref{tabel:time},
 which can be summarized as follows:
-1) Global methods cost more time than distributed methods on most data sets.
-2) Some centralized methods get closed-form solution in less time, in consideration of file IO and communication cost in distributed methods.
-3) In terms of distributed methods, \texttt{MDD-LS} and \texttt{MDD-RKHS} always need more training time
-than averaging methods because MDD methods need more than one iteration but averaging methods only need one iteration.
-4) Kernel methods always cost more time than Linear methods, because of higher computation complexity.
-5) Distributed methods lead huge speedup radio on some data sets, such as space\_ga, phishing and cadata.
+1) Global methods cost more time than distributed methods on all data sets;
+2) Kernel methods always spend more time than Linear methods, because of higher computation complexity;
+3) Distributed methods lead great speedup on some data sets, such as space\_ga, phishing and cadata;
+4) The running time of distributed methods decays almost linearly associated with the increase of worker nodes;
+5) Compared with global methods, our \texttt{MDD} methods own higher computational efficiency, while existing small distance away from divide-and-conquer methods.
 
-The above results show that MDD methods need some additional computation
-time but make the performance gap between centralized methods and traditional distributed methods tighter,
+The above results show that \texttt{MDD} methods need a bit more training time
+but make the performance gap between global methods and traditional distributed methods tighter,
 which is consistent with our theoretical analysis.
-
-\subsection{Stability}
-Then, under fixed data set cod\-rna and different worker nodes, we run all methods 30 times with random partitions of non-overlapping 70\% training data and 30\% testing data, training data were divided into 10 parts every time as well.
-% Graph 1. RMSE
-From Graph \cite{graph:mse}, we can see 1) The root Mean Square Error grows up very quickly with nodes increasing in the beginning and becomes stable on xxx when more than xxx nodes. 2) The RMSE of MDD methods grows slower than averaging methods. 3) Both of MDD methods and averaging methods convergence on xxx RMSE.
-
-
-% Graph 2. Time
-Graph \cite{graph:time} shows 1) The run time decreases fast with nodes increasing at the begin but increasing when nodes size is bigger than xxx. That may caused by training time dominate the run time at beginning but file IO and communication cost play a leading role in following. 2) The run time of MDD methods is always larger than averaging methods and the gap becomes bigger and bigger.
-
-The above results indicates than we can get a trade-off of the root Mean Square Error and run time by controlling worker nodes which can be very useful in practical.
-
-
-%\textbf{Note}: Source code are attached in Supplementary Material.
 
 
 \section{Conclusion}
