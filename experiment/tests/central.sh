@@ -36,27 +36,27 @@ for((i=1;i<=$folds;i++));do
     mkdir log/${file_name}
     fi
 
-    # rr central
-    start_tm=`date +%s%N`
-    tests/test_rr_central ${file_name} ${train_path} ${test_path} ${train_size} ${test_size} ${feature_size} $lambda_rr > log/${file_name}/rr_central.log
-    MSE=$(tail -1 log/${file_name}/rr_central.log) 
-    end_tm=`date +%s%N`
-    use_tm=`echo $end_tm $start_tm | awk '{ print ($1 - $2) / 1000000000}'`
-    echo -n $MSE >> $log_file_rr_central
-    echo -n " " >> $log_file_rr_central
-    printf "%.6f" $use_tm >> $log_file_rr_central
-    echo >> $log_file_rr_central
+    # # rr central
+    # start_tm=`date +%s%N`
+    # tests/test_rr_central ${file_name} ${train_path} ${test_path} ${train_size} ${test_size} ${feature_size} $lambda_rr > log/${file_name}/rr_central.log
+    # MSE=$(tail -1 log/${file_name}/rr_central.log) 
+    # end_tm=`date +%s%N`
+    # use_tm=`echo $end_tm $start_tm | awk '{ print ($1 - $2) / 1000000000}'`
+    # echo -n $MSE >> $log_file_rr_central
+    # echo -n " " >> $log_file_rr_central
+    # printf "%.6f" $use_tm >> $log_file_rr_central
+    # echo >> $log_file_rr_central
 
-    # krr central
-    start_tm=`date +%s%N`
-    tests/test_krr_central ${file_name} ${train_path} ${test_path} ${train_size} ${test_size} ${feature_size} $lambda_rr > log/${file_name}/krr_central.log
-    MSE=$(tail -1 log/${file_name}/krr_central.log)
-    end_tm=`date +%s%N`
-    use_tm=`echo $end_tm $start_tm | awk '{ print ($1 - $2) / 1000000000}'`
-    echo  -n $MSE >> $log_file_krr_central
-    echo -n " " >> $log_file_krr_central
-    printf "%.6f" $use_tm >> $log_file_krr_central
-    echo >> $log_file_krr_central
+    # # krr central
+    # start_tm=`date +%s%N`
+    # tests/test_krr_central ${file_name} ${train_path} ${test_path} ${train_size} ${test_size} ${feature_size} $lambda_rr > log/${file_name}/krr_central.log
+    # MSE=$(tail -1 log/${file_name}/krr_central.log)
+    # end_tm=`date +%s%N`
+    # use_tm=`echo $end_tm $start_tm | awk '{ print ($1 - $2) / 1000000000}'`
+    # echo  -n $MSE >> $log_file_krr_central
+    # echo -n " " >> $log_file_krr_central
+    # printf "%.6f" $use_tm >> $log_file_krr_central
+    # echo >> $log_file_krr_central
 
     # rr mean
     sh tests/local_one.sh $lambda_krr $gamma $servers $workers ${file_name} $feature_size rr mean >> $log_file_rr_mean
