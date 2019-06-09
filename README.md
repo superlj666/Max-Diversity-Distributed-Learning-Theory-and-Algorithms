@@ -1,7 +1,6 @@
 # NIPS_2019_DC
 # Max-Discrepancy Distributed Learning: Fast Risk Bounds and Algorithms
-## Supplementary file
-Appendixes mentioned in the paper are attached in DC-Appendix.pdf
+Experiments for the paper "[Max-Discrepancy Distributed Learning: Fast Risk Bounds and Algorithms](https://arxiv.org/abs/1902.04768)", based on a refined version of parameter sever: [ps-lite](https://github.com/dmlc/ps-lite).
 ## Usage of source code
 We implement all methods in C++ and some utils in MATLAB, run scripts are written in Shell as well.
 Code used in experiments locates in ./code
@@ -10,7 +9,7 @@ We do experiments based on following softwares:
 1. g++ >= 4.8.0
 2. MATLAB R2017b
 3. ps-lite from https://github.com/dmlc/ps-lite
-4. Intel® Math Kernel Library 2018
+4. Intel Math Kernel Library 2018
 ### Data sets
 1. All data sets are from https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
 ### Code structure
