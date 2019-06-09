@@ -1,4 +1,3 @@
-# NIPS_2019_DC
 # Max-Discrepancy Distributed Learning: Fast Risk Bounds and Algorithms
 Experiments for the paper "[Max-Discrepancy Distributed Learning: Fast Risk Bounds and Algorithms](https://arxiv.org/abs/1902.04768)", based on a refined version of parameter sever: [ps-lite](https://github.com/dmlc/ps-lite).
 ## Usage of source code
