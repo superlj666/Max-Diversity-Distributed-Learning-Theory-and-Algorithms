@@ -37,7 +37,7 @@ if(MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 FILE(GLOB getopt_SOURCE "src/windows/getopt.c")
 list(APPEND SOURCE ${getopt_SOURCE}) 
-add_definitions(-DSTATIC_GETOPT)
+add_definitions(-Dstatistics_GETOPT)
 include_directories(pslite "${PROJECT_SOURCE_DIR}/src/windows")
 list(APPEND pslite_LINKER_LIBS_L "ipHlpApi.lib" "ws2_32.lib")
   foreach(flag_var

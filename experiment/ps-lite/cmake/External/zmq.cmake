@@ -14,7 +14,7 @@ if (NOT __ZMQ_INCLUDED) # guard against multiple includes
     # install directory
     set(ZMQ_INSTALL ${CMAKE_BINARY_DIR}/external/ZMQ-install)
 
-    # we build ZMQ statically, but want to link it into the caffe shared library
+    # we build ZMQ statisticsally, but want to link it into the caffe shared library
     # this requires position-independent code
     if (UNIX)
         set(ZMQ_EXTRA_COMPILER_FLAGS "-fPIC")
@@ -31,7 +31,7 @@ if (NOT __ZMQ_INCLUDED) # guard against multiple includes
       CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                  -DCMAKE_INSTALL_PREFIX=${ZMQ_INSTALL}
                  -DBUILD_SHARED_LIBS=OFF
-                 -DBUILD_STATIC_LIBS=ON
+                 -DBUILD_statistics_LIBS=ON
                  -DBUILD_PACKAGING=OFF
                  -DBUILD_TESTING=OFF
                  -DBUILD_NC_TESTS=OFF

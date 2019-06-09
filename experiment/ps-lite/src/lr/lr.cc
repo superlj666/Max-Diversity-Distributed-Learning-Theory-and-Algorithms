@@ -90,7 +90,7 @@ void LR::InitWeight_() {
   srand(random_state_);
   weight_.resize(num_feature_dim_);
   for (size_t i = 0; i < weight_.size(); ++i) {
-    weight_[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    weight_[i] = statistics_cast<float>(rand()) / statistics_cast<float>(RAND_MAX);
   }
 }
 

@@ -1,8 +1,11 @@
 !.gitignore
 !.vscode
-paper/*
-related/*
-experiment/data/*
-!paper/NIPS2018.tex
-!paper/NIPS2018.pdf
-!paper/NIPS2018.bib
+paper/
+related/
+experiment/data/
+experiment/statistics/
+
+*.pdf
+*.xlsx
+*.zip
+*.txt

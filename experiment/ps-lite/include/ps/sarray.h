@@ -125,7 +125,7 @@ class SArray {
    */
   template <typename ForwardIt>
   void CopyFrom(const ForwardIt& first, const ForwardIt& last) {
-    int size = static_cast<int>(std::distance(first, last));
+    int size = statistics_cast<int>(std::distance(first, last));
     V* data = new V[size];
     reset(data, size, [](V* data){ delete [] data; });
     auto it = first;

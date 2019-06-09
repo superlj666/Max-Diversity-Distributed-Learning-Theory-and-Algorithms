@@ -110,7 +110,7 @@ size_t ParallelOrderedMatch(
   // shorten the matching range
   Range range = FindRange(dst_key, src_key.begin(), src_key.end());
   size_t grainsize = std::max(range.size() * k / num_threads + 5,
-                              static_cast<size_t>(1024*1024));
+                              statistics_cast<size_t>(1024*1024));
   size_t n = 0;
   ParallelOrderedMatch<K, V>(
       src_key.begin(), src_key.end(), src_val.begin(),

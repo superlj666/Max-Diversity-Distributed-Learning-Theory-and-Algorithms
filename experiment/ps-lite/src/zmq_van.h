@@ -18,9 +18,9 @@ namespace ps {
  */
 inline void FreeData(void *data, void *hint) {
   if (hint == NULL) {
-    delete [] static_cast<char*>(data);
+    delete [] statistics_cast<char*>(data);
   } else {
-    delete static_cast<SArray<char>*>(hint);
+    delete statistics_cast<SArray<char>*>(hint);
   }
 }
 
@@ -76,7 +76,7 @@ class ZMQVan : public Van {
     }
     std::string addr = local ? "ipc:///tmp/" : "tcp://" + hostname + ":";
     int port = node.port;
-    unsigned seed = static_cast<unsigned>(time(NULL)+port);
+    unsigned seed = statistics_cast<unsigned>(time(NULL)+port);
     for (int i = 0; i < max_retry+1; ++i) {
       auto address = addr + std::to_string(port);
       if (zmq_bind(receiver_, address.c_str()) == 0) break;
@@ -275,7 +275,7 @@ class ZMQVan : public Van {
 //       if (errno == EINTR) continue;
 //       break;
 //     }
-//     uint8_t *data = static_cast<uint8_t*>(zmq_msg_data(&msg));
+//     uint8_t *data = statistics_cast<uint8_t*>(zmq_msg_data(&msg));
 //     int event = *reinterpret_cast<uint16_t*>(data);
 //     // int value = *(uint32_t *)(data + 2);
 

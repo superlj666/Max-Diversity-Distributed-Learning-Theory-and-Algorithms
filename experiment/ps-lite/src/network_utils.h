@@ -39,7 +39,7 @@ void GetIP(const std::string& interface, std::string* ip) {
       DWORD apRet = GetAdaptersInfo(pAdapterInfo, &bufLen);
       if (apRet == ERROR_BUFFER_OVERFLOW) {
         free(pAdapterInfo);  // in case we had previously allocated it
-        pAdapterInfo = static_cast<IP_ADAPTER_INFO*>(malloc(bufLen));
+        pAdapterInfo = statistics_cast<IP_ADAPTER_INFO*>(malloc(bufLen));
       } else if (apRet == ERROR_SUCCESS) {
         break;
       } else {
@@ -129,7 +129,7 @@ void GetAvailableInterfaceAndIP(
       DWORD apRet = GetAdaptersInfo(pAdapterInfo, &bufLen);
       if (apRet == ERROR_BUFFER_OVERFLOW) {
         free(pAdapterInfo);  // in case we had previously allocated it
-        pAdapterInfo = static_cast<IP_ADAPTER_INFO*>(malloc(bufLen));
+        pAdapterInfo = statistics_cast<IP_ADAPTER_INFO*>(malloc(bufLen));
       } else if (apRet == ERROR_SUCCESS) {
         break;
       } else {

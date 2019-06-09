@@ -34,7 +34,7 @@ using namespace std;
 /* Consider adjusting LOOP_COUNT based on the performance of your computer */
 /* to make sure that total run time is at least 1 second */
 #define LOOP_COUNT 10
-static int train_size_ = rr::ToInt(ps::Environment::Get()->find("TRAIN_SAMPLE_SIZE"));
+statistics int train_size_ = rr::ToInt(ps::Environment::Get()->find("TRAIN_SAMPLE_SIZE"));
 int main(int argc, char *argv[])
 {
      clock_t tic = clock();

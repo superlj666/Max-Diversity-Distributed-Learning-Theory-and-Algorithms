@@ -98,9 +98,9 @@ class Resender {
     uint8_t sender = msg.meta.sender == Node::kEmpty ?
                      van_->my_node().id : msg.meta.sender;
     uint8_t recver = msg.meta.recver;
-    return (static_cast<uint64_t>(id) << 48) |
-        (static_cast<uint64_t>(sender) << 40) |
-        (static_cast<uint64_t>(recver) << 32) |
+    return (statistics_cast<uint64_t>(id) << 48) |
+        (statistics_cast<uint64_t>(sender) << 40) |
+        (statistics_cast<uint64_t>(recver) << 32) |
         (msg.meta.timestamp << 1) | msg.meta.request;
   }
   Time Now() {

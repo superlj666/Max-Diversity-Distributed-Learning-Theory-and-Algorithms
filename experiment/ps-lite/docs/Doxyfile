@@ -403,8 +403,8 @@ LOOKUP_CACHE_SIZE      = 0
 
 # If the EXTRACT_ALL tag is set to YES doxygen will assume all entities in
 # documentation are documented, even if no documentation was available. Private
-# class members and static file members will be hidden unless the
-# EXTRACT_PRIVATE respectively EXTRACT_STATIC tags are set to YES.
+# class members and statistics file members will be hidden unless the
+# EXTRACT_PRIVATE respectively EXTRACT_statistics tags are set to YES.
 # Note: This will also disable the warnings about undocumented members that are
 # normally produced when WARNINGS is set to YES.
 # The default value is: NO.
@@ -423,11 +423,11 @@ EXTRACT_PRIVATE        = NO
 
 EXTRACT_PACKAGE        = NO
 
-# If the EXTRACT_STATIC tag is set to YES all static members of a file will be
+# If the EXTRACT_statistics tag is set to YES all statistics members of a file will be
 # included in the documentation.
 # The default value is: NO.
 
-EXTRACT_STATIC         = NO
+EXTRACT_statistics         = NO
 
 # If the EXTRACT_LOCAL_CLASSES tag is set to YES classes (and structs) defined
 # locally in source files will be included in the documentation. If set to NO

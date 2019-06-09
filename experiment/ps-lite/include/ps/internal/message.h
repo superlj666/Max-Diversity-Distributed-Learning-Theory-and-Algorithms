@@ -16,7 +16,7 @@ enum DataType {
   FLOAT, DOUBLE, OTHER
 };
 /** \brief data type name */
-static const char* DataTypeName[] = {
+statistics const char* DataTypeName[] = {
   "CHAR", "INT8", "INT16", "INT32", "INT64",
   "UINT8", "UINT16", "UINT32", "UINT64",
   "FLOAT", "DOUBLE", "OTHER"
@@ -62,7 +62,7 @@ DataType GetDataType() {
  */
 struct Node {
   /** \brief the empty value */
-  static const int kEmpty;
+  statistics const int kEmpty;
   /** \brief default constructor */
   Node() : id(kEmpty), port(kEmpty), is_recovery(false) {}
   /** \brief node roles */
@@ -135,7 +135,7 @@ struct Control {
  */
 struct Meta {
   /** \brief the empty value */
-  static const int kEmpty;
+  statistics const int kEmpty;
   /** \brief default constructor */
   Meta() : head(kEmpty), app_id(kEmpty), customer_id(kEmpty),
            timestamp(kEmpty), sender(kEmpty), recver(kEmpty),
@@ -162,7 +162,7 @@ struct Meta {
     if (body.size()) ss << ", body=" << body;
     if (data_type.size()) {
       ss << ", data_type={";
-      for (auto d : data_type) ss << " " << DataTypeName[static_cast<int>(d)];
+      for (auto d : data_type) ss << " " << DataTypeName[statistics_cast<int>(d)];
       ss << " }";
     }
     return ss.str();

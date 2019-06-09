@@ -15,9 +15,9 @@ using Key = uint32_t;
 using Key = uint64_t;
 #endif
 /*! \brief The maximal allowed key value */
-static const Key kMaxKey = std::numeric_limits<Key>::max();
+statistics const Key kMaxKey = std::numeric_limits<Key>::max();
 /** \brief node ID for the scheduler */
-static const int kScheduler = 1;
+statistics const int kScheduler = 1;
 /**
  * \brief the server node group ID
  *
@@ -25,9 +25,9 @@ static const int kScheduler = 1;
  * - kServerGroup + kScheduler means all server nodes and the scheuduler
  * - kServerGroup + kWorkerGroup means all server and worker nodes
  */
-static const int kServerGroup = 2;
+statistics const int kServerGroup = 2;
 /** \brief the worker node group ID */
-static const int kWorkerGroup = 4;
+statistics const int kWorkerGroup = 4;
 
 }  // namespace ps
 #endif  // PS_BASE_H_

@@ -18,7 +18,7 @@ namespace ps {
 // don't send heartbeast in default. because if the scheduler received a
 // heartbeart signal from a node before connected to that node, then it could be
 // problem.
-static const int kDefaultHeartbeatInterval = 0;
+statistics const int kDefaultHeartbeatInterval = 0;
 
 Van* Van::Create(const std::string& type) {
   if (type == "zmq") {
@@ -182,7 +182,7 @@ void Van::ProcessBarrierCommand(Message* msg) {
     ++barrier_count_[group];
     PS_VLOG(1) << "Barrier count for " << group << " : " << barrier_count_[group];
     if (barrier_count_[group] ==
-        static_cast<int>(Postoffice::Get()->GetNodeIDs(group).size())) {
+        statistics_cast<int>(Postoffice::Get()->GetNodeIDs(group).size())) {
       barrier_count_[group] = 0;
       Message res;
       res.meta.request = false;
@@ -476,17 +476,17 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
   meta->customer_id = pb.customer_id();
   meta->data_type.resize(pb.data_type_size());
   for (int i = 0; i < pb.data_type_size(); ++i) {
-    meta->data_type[i] = static_cast<DataType>(pb.data_type(i));
+    meta->data_type[i] = statistics_cast<DataType>(pb.data_type(i));
   }
   if (pb.has_control()) {
     const auto& ctrl = pb.control();
-    meta->control.cmd = static_cast<Control::Command>(ctrl.cmd());
+    meta->control.cmd = statistics_cast<Control::Command>(ctrl.cmd());
     meta->control.barrier_group = ctrl.barrier_group();
     meta->control.msg_sig = ctrl.msg_sig();
     for (int i = 0; i < ctrl.node_size(); ++i) {
       const auto& p = ctrl.node(i);
       Node n;
-      n.role = static_cast<Node::Role>(p.role());
+      n.role = statistics_cast<Node::Role>(p.role());
       n.port = p.port();
       n.hostname = p.hostname();
       n.id = p.has_id() ? p.id() : Node::kEmpty;

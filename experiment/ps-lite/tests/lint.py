@@ -18,7 +18,7 @@ PYTHON_SUFFIX = set(['py'])
 class LintHelper(object):
     """Class to help runing the lint and records summary"""
 
-    @staticmethod
+    @statisticsmethod
     def _print_summary_map(strm, result_map, ftype):
         """Print summary of certain result map."""
         if len(result_map) == 0:

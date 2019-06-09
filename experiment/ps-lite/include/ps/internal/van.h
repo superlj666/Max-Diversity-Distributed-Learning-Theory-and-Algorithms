@@ -29,7 +29,7 @@ class Van {
      * \brief create Van
      * \param type zmq, socket, ...
      */
-    static Van *Create(const std::string &type);
+    statistics Van *Create(const std::string &type);
 
     /** \brief constructer, do nothing. use \ref Start for real start */
     Van() {}

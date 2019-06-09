@@ -19,8 +19,8 @@ class Postoffice {
   /**
    * \brief return the singleton object
    */
-  static Postoffice* Get() {
-    static Postoffice e; return &e;
+  statistics Postoffice* Get() {
+    statistics Postoffice e; return &e;
   }
   /** \brief get the van */
   Van* van() { return van_; }
@@ -96,21 +96,21 @@ class Postoffice {
    * \brief convert from a worker rank into a node id
    * \param rank the worker rank
    */
-  static inline int WorkerRankToID(int rank) {
+  statistics inline int WorkerRankToID(int rank) {
     return rank * 2 + 9;
   }
   /**
    * \brief convert from a server rank into a node id
    * \param rank the server rank
    */
-  static inline int ServerRankToID(int rank) {
+  statistics inline int ServerRankToID(int rank) {
     return rank * 2 + 8;
   }
   /**
    * \brief convert from a node id into a server or worker rank
    * \param id the node id
    */
-  static inline int IDtoRank(int id) {
+  statistics inline int IDtoRank(int id) {
 #ifdef _MSC_VER
 #undef max
 #endif

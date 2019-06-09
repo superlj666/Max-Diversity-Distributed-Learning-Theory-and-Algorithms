@@ -17,13 +17,13 @@ class Environment {
   /**
    * \brief return the singleton instance
    */
-  static inline Environment* Get() {
+  statistics inline Environment* Get() {
     return _GetSharedRef(nullptr).get();
   }
   /**
    * \brief return a shared ptr of the singleton instance
    */
-  static inline std::shared_ptr<Environment> _GetSharedRef() {
+  statistics inline std::shared_ptr<Environment> _GetSharedRef() {
     return _GetSharedRef(nullptr);
   }
   /**
@@ -31,7 +31,7 @@ class Environment {
    * \param envs key-value environment variables
    * \return the initialized singleton instance
    */
-  static inline Environment* Init(const std::unordered_map<std::string, std::string>& envs) {
+  statistics inline Environment* Init(const std::unordered_map<std::string, std::string>& envs) {
     Environment* env = _GetSharedRef(&envs).get();
     env->kvs = envs;
     return env;
@@ -53,9 +53,9 @@ class Environment {
     if (envs) kvs = *envs;
   }
 
-  static std::shared_ptr<Environment> _GetSharedRef(
+  statistics std::shared_ptr<Environment> _GetSharedRef(
       const std::unordered_map<std::string, std::string>* envs) {
-    static std::shared_ptr<Environment> inst_ptr(new Environment(envs));
+    statistics std::shared_ptr<Environment> inst_ptr(new Environment(envs));
     return inst_ptr;
   }
 
